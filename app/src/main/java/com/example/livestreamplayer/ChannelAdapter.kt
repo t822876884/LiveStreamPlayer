@@ -34,6 +34,17 @@ class ChannelAdapter(
         updateFavoriteButton(holder.binding, isFavorite)
         updateBlockButton(holder.binding, isBlocked)
         
+        // 设置直播/录播标识
+        if (channel.isLive) {
+            holder.binding.itemStreamType.text = "直播"
+            holder.binding.itemStreamType.setBackgroundResource(android.R.color.holo_red_light)
+            holder.binding.itemStreamType.visibility = ViewGroup.VISIBLE
+        } else {
+            holder.binding.itemStreamType.text = "录播"
+            holder.binding.itemStreamType.setBackgroundResource(android.R.color.holo_blue_light)
+            holder.binding.itemStreamType.visibility = ViewGroup.VISIBLE
+        }
+        
         // 点击频道进入播放器
         holder.binding.itemTitle.setOnClickListener { onItemClick(channel) }
         

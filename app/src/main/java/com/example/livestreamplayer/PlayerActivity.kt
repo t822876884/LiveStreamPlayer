@@ -1,10 +1,14 @@
-// 粘贴上一个回答中 PlayerActivity.kt 的完整代码
 package com.example.livestreamplayer
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+// 如果不需要RTSP，请移除这个导入
+// import androidx.media3.exoplayer.source.rtsp.RtspMediaSource
 import com.example.livestreamplayer.databinding.ActivityPlayerBinding
 
 class PlayerActivity : AppCompatActivity() {
@@ -31,7 +35,24 @@ class PlayerActivity : AppCompatActivity() {
     private fun initializePlayer(url: String) {
         player = ExoPlayer.Builder(this).build().also { exoPlayer ->
             binding.playerView.player = exoPlayer
-            val mediaItem = MediaItem.fromUri(url)
+            
+            // 根据URL类型创建适当的MediaItem
+            val mediaItem = when {
+                url.startsWith("rtmp://") -> {
+                    // RTMP流 - 使用正确的MIME类型或不设置MIME类型
+                    MediaItem.Builder()
+                        .setUri(url)
+                        // RTMP不需要特殊的MIME类型设置
+                        // 或者使用通用的应用程序类型
+                        // .setMimeType(MimeTypes.APPLICATION_OCTET_STREAM)
+                        .build()
+                }
+                else -> {
+                    // 其他类型的流
+                    MediaItem.fromUri(url)
+                }
+            }
+            
             exoPlayer.setMediaItem(mediaItem)
             exoPlayer.playWhenReady = true
             exoPlayer.prepare()

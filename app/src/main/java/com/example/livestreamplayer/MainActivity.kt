@@ -26,7 +26,6 @@ class MainActivity : AppCompatActivity() {
         setupPlatformRecyclerView()
         setupFavoriteChannelsRecyclerView()
         setupBlockedChannelsRecyclerView()
-        // 移除 fetchPlatforms() 调用
     }
     
     override fun onResume() {

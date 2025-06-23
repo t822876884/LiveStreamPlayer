@@ -45,7 +45,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
-    implementation(libs.androidx.preference.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -68,4 +67,11 @@ dependencies {
 
     // 新增：添加对 HLS (m3u8) 直播格式的支持
     implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
+    
+    // 新增：添加对 RTMP 直播格式的支持
+    implementation("androidx.media3:media3-exoplayer:1.3.1")  // 基础ExoPlayer
+    implementation("com.google.android.exoplayer:extension-rtmp:2.18.7")  // RTMP扩展
+
+    // 如果需要RTSP支持，请使用正确的依赖
+    // implementation("androidx.media3:media3-exoplayer-rtsp:1.3.1")
 }
