@@ -1,4 +1,3 @@
-// 粘贴上一个回答中 MainActivity.kt 的完整代码
 package com.example.livestreamplayer
 
 import android.content.Intent
@@ -14,60 +13,86 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var platformAdapter: PlatformAdapter
+    private lateinit var favoriteChannelAdapter: FavoriteChannelAdapter
+    private lateinit var preferenceManager: PreferenceManager
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        setupRecyclerView()
-        fetchPlatforms()
+        
+        preferenceManager = PreferenceManager(this)
+        
+        setupPlatformRecyclerView()
+        setupFavoriteChannelsRecyclerView()
+        setupBlockedChannelsRecyclerView()
+        // 移除 fetchPlatforms() 调用
+    }
+    
+    override fun onResume() {
+        super.onResume()
+        // 每次回到主页时只刷新收藏的主播列表，屏蔽列表已移到 BlockedChannelsActivity
+        updateFavoriteChannels()
+        // 移除 updateBlockedChannels() 调用
     }
 
-    private fun setupRecyclerView() {
-        platformAdapter = PlatformAdapter(emptyList()) { platform ->
-            val intent = Intent(this, ChannelListActivity::class.java).apply {
-                putExtra(ChannelListActivity.EXTRA_PLATFORM_URL, platform.address)
-                putExtra(ChannelListActivity.EXTRA_PLATFORM_TITLE, platform.title)
-            }
+    // 替换setupPlatformRecyclerView方法
+    private fun setupPlatformRecyclerView() {
+        // 设置平台卡片点击事件
+        binding.cardViewPlatforms.setOnClickListener {
+            // 跳转到平台列表页面
+            val intent = Intent(this, PlatformListActivity::class.java)
             startActivity(intent)
         }
-        binding.recyclerViewPlatforms.apply {
-            adapter = platformAdapter
-            layoutManager = LinearLayoutManager(this@MainActivity)
+        
+        // 设置屏蔽列表卡片点击事件
+        binding.cardViewBlockedChannels.setOnClickListener {
+            // 跳转到屏蔽列表页面
+            val intent = Intent(this, BlockedChannelsActivity::class.java)
+            startActivity(intent)
         }
     }
-
-
-    private fun fetchPlatforms() {
-        Log.d("MainActivity", "fetchPlatforms: 开始获取平台数据...")
-        binding.progressBar.visibility = View.VISIBLE
-        lifecycleScope.launch {
-            try {
-                // 这里的 response.body() 现在是 PlatformResponse 类型
-                val response = RetrofitInstance.api.getPlatforms()
-                Log.d("MainActivity", "fetchPlatforms: 收到响应，是否成功: ${response.isSuccessful}")
-
-                binding.progressBar.visibility = View.GONE
-                if (response.isSuccessful && response.body() != null) {
-                    // 从响应体中取出平台列表
-                    val platformList = response.body()!!.platforms
-
-                    Log.d("MainActivity", "fetchPlatforms: 获取到 ${platformList.size} 个平台")
-                    if (platformList.isEmpty()) {
-                        Log.w("MainActivity", "fetchPlatforms: 平台列表为空，屏幕将显示空白")
-                        Toast.makeText(this@MainActivity, "平台列表为空", Toast.LENGTH_SHORT).show()
-                    }
-                    // 将真正的列表交给Adapter
-                    platformAdapter.updateData(platformList)
-                } else {
-                    Log.e("MainActivity", "fetchPlatforms: 请求失败或响应体为空，错误码: ${response.code()}, 消息: ${response.message()}")
-                    Toast.makeText(this@MainActivity, "Error: ${response.message()}", Toast.LENGTH_SHORT).show()
+    
+    private fun setupFavoriteChannelsRecyclerView() {
+        favoriteChannelAdapter = FavoriteChannelAdapter(
+            emptyList(),
+            preferenceManager,
+            onItemClick = { favoriteChannel ->
+                val intent = Intent(this, PlayerActivity::class.java).apply {
+                    putExtra(PlayerActivity.EXTRA_STREAM_URL, favoriteChannel.channel.address)
+                    putExtra(PlayerActivity.EXTRA_STREAM_TITLE, favoriteChannel.channel.title)
                 }
-            } catch (e: Exception) {
-                binding.progressBar.visibility = View.GONE
-                Log.e("MainActivity", "fetchPlatforms: 捕获到异常", e)
-                Toast.makeText(this@MainActivity, "加载失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                startActivity(intent)
+            },
+            onFavoriteClick = { channel, _ ->
+                // 取消收藏
+                preferenceManager.removeFavoriteChannel(channel)
+                Toast.makeText(this, "已取消收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                // 更新列表
+                updateFavoriteChannels()
             }
+        )
+        binding.recyclerViewFavoriteChannels.apply {
+            adapter = favoriteChannelAdapter
+            layoutManager = LinearLayoutManager(this@MainActivity)
         }
+        
+        // 初始加载收藏的主播
+        updateFavoriteChannels()
+    }
+    
+    // 新增屏蔽主播列表设置
+    // 修改屏蔽主播列表设置
+    private fun setupBlockedChannelsRecyclerView() {
+        // 只需要设置点击事件
+        binding.cardViewBlockedChannels.setOnClickListener {
+            val intent = Intent(this, BlockedChannelsActivity::class.java)
+            startActivity(intent)
+        }
+    }
+    
+    private fun updateFavoriteChannels() {
+        val favoriteChannels = preferenceManager.getFavoriteChannels()
+        favoriteChannelAdapter.updateData(favoriteChannels)
     }
 }

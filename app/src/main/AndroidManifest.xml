@@ -33,6 +33,9 @@
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
             android:exported="false"
             android:parentActivityName=".ChannelListActivity" />
+
+        <activity android:name=".PlatformListActivity" android:exported="false" />
+        <activity android:name=".BlockedChannelsActivity" android:exported="false" />
     </application>
 
 </manifest>

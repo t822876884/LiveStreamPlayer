@@ -4,6 +4,8 @@ package com.example.livestreamplayer
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -17,6 +19,8 @@ class ChannelListActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChannelListBinding
     private lateinit var channelAdapter: ChannelAdapter
+    private lateinit var preferenceManager: PreferenceManager
+    private var platformUrl: String? = null
 
     companion object {
         const val EXTRA_PLATFORM_URL = "extra_platform_url"
@@ -27,8 +31,10 @@ class ChannelListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityChannelListBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        
+        preferenceManager = PreferenceManager(this)
 
-        val platformUrl = intent.getStringExtra(EXTRA_PLATFORM_URL)
+        platformUrl = intent.getStringExtra(EXTRA_PLATFORM_URL)
         val platformTitle = intent.getStringExtra(EXTRA_PLATFORM_TITLE)
 
         title = platformTitle ?: "Channels"
@@ -40,37 +46,68 @@ class ChannelListActivity : AppCompatActivity() {
         }
 
         setupRecyclerView()
-        // 调用正确的获取频道函数
-        fetchChannels(platformUrl)
+        fetchChannels(platformUrl!!)
     }
 
     private fun setupRecyclerView() {
-        channelAdapter = ChannelAdapter(emptyList()) { channel ->
-            val intent = Intent(this, PlayerActivity::class.java).apply {
-                putExtra(PlayerActivity.EXTRA_STREAM_URL, channel.address)
-                putExtra(PlayerActivity.EXTRA_STREAM_TITLE, channel.title)
+        channelAdapter = ChannelAdapter(
+            emptyList(),
+            preferenceManager,
+            platformUrl ?: "",
+            onItemClick = { channel ->
+                val intent = Intent(this, PlayerActivity::class.java).apply {
+                    putExtra(PlayerActivity.EXTRA_STREAM_URL, channel.address)
+                    putExtra(PlayerActivity.EXTRA_STREAM_TITLE, channel.title)
+                }
+                startActivity(intent)
+            },
+            onFavoriteClick = { channel, isFavorite ->
+                if (isFavorite && platformUrl != null) {
+                    preferenceManager.saveFavoriteChannel(channel, platformUrl!!)
+                    Toast.makeText(this, "已收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                } else {
+                    preferenceManager.removeFavoriteChannel(channel)
+                    Toast.makeText(this, "已取消收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                }
+            },
+            onBlockClick = { channel, isBlocked ->
+                if (isBlocked) {
+                    preferenceManager.addBlockedChannel(channel)
+                    Toast.makeText(this, "已屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                    // 使用延迟执行，避免在回调中直接修改数据
+                    Handler(Looper.getMainLooper()).post {
+                        if (platformUrl != null) {
+                            fetchChannels(platformUrl!!)
+                        }
+                    }
+                } else {
+                    preferenceManager.removeBlockedChannel(channel)
+                    Toast.makeText(this, "已取消屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                    // 使用延迟执行，避免在回调中直接修改数据
+                    Handler(Looper.getMainLooper()).post {
+                        if (platformUrl != null) {
+                            fetchChannels(platformUrl!!)
+                        }
+                    }
+                }
             }
-            startActivity(intent)
-        }
+        )
         binding.recyclerViewChannels.apply {
             adapter = channelAdapter
             layoutManager = LinearLayoutManager(this@ChannelListActivity)
         }
     }
 
-    // 这是 ChannelListActivity 应该有的获取数据的函数
     private fun fetchChannels(url: String) {
         binding.progressBarChannels.visibility = View.VISIBLE
         lifecycleScope.launch {
             try {
-                // 注意这里拼接了完整的URL
                 val fullUrl = "http://api.hclyz.com:81/mf/$url"
-                // 调用的是 getChannels，返回的是 ChannelList
                 val response = RetrofitInstance.api.getChannels(fullUrl)
                 binding.progressBarChannels.visibility = View.GONE
 
                 if (response.isSuccessful && response.body() != null) {
-                    // 从 ChannelList 对象中取出 channels 列表
+                    // 更新适配器数据，适配器内部会过滤掉被屏蔽的主播
                     channelAdapter.updateData(response.body()!!.channels)
                 } else {
                     Toast.makeText(
@@ -89,5 +126,18 @@ class ChannelListActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+    
+    // 添加一个扩展属性，方便获取当前列表
+    private val ChannelAdapter.currentList: List<Channel>
+        get() = (0 until itemCount).map { position ->
+            getItem(position)
+        }
+    
+    private fun ChannelAdapter.getItem(position: Int): Channel {
+        // 这里需要访问适配器内部的channels列表
+        // 由于我们无法直接访问，所以这是一个模拟实现
+        // 实际使用时，应该在ChannelAdapter中添加一个方法来获取指定位置的Channel
+        return Channel("", "") // 这里只是一个占位符
     }
 }
