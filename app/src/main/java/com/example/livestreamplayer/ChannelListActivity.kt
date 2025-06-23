@@ -4,8 +4,6 @@ package com.example.livestreamplayer
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.View
 import android.widget.Toast
@@ -74,20 +72,16 @@ class ChannelListActivity : AppCompatActivity() {
                 if (isBlocked) {
                     preferenceManager.addBlockedChannel(channel)
                     Toast.makeText(this, "已屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
-                    // 使用延迟执行，避免在回调中直接修改数据
-                    Handler(Looper.getMainLooper()).post {
-                        if (platformUrl != null) {
-                            fetchChannels(platformUrl!!)
-                        }
+                    // 不再使用有问题的currentList，而是重新获取频道列表
+                    if (platformUrl != null) {
+                        fetchChannels(platformUrl!!)
                     }
                 } else {
                     preferenceManager.removeBlockedChannel(channel)
                     Toast.makeText(this, "已取消屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
-                    // 使用延迟执行，避免在回调中直接修改数据
-                    Handler(Looper.getMainLooper()).post {
-                        if (platformUrl != null) {
-                            fetchChannels(platformUrl!!)
-                        }
+                    // 重新获取频道列表
+                    if (platformUrl != null) {
+                        fetchChannels(platformUrl!!)
                     }
                 }
             }
