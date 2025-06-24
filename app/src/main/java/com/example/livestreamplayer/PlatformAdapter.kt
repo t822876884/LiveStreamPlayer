@@ -9,7 +9,8 @@ class PlatformAdapter(
     private var platforms: List<Platform>,
     private val preferenceManager: PreferenceManager,
     private val onItemClick: (Platform) -> Unit,
-    private val onFavoriteClick: (Platform, Boolean) -> Unit
+    private val onFavoriteClick: (Platform, Boolean) -> Unit,
+    private val onBlockClick: (Platform, Boolean) -> Unit = { _, _ -> } // 默认空实现
 ) : RecyclerView.Adapter<PlatformAdapter.PlatformViewHolder>() {
     
     inner class PlatformViewHolder(val binding: ItemPlatformBinding) :
@@ -29,6 +30,10 @@ class PlatformAdapter(
         val isFavorite = preferenceManager.isPlatformFavorite(platform)
         updateFavoriteButton(holder.binding, isFavorite)
         
+        // 设置屏蔽状态
+        val isBlocked = preferenceManager.isPlatformBlocked(platform)
+        updateBlockButton(holder.binding, isBlocked)
+        
         // 点击平台进入频道列表
         holder.binding.itemTitle.setOnClickListener { onItemClick(platform) }
         
@@ -38,6 +43,13 @@ class PlatformAdapter(
             onFavoriteClick(platform, newState)
             updateFavoriteButton(holder.binding, newState)
         }
+        
+        // 点击屏蔽按钮
+        holder.binding.btnBlock.setOnClickListener {
+            val newState = !preferenceManager.isPlatformBlocked(platform)
+            onBlockClick(platform, newState)
+            updateBlockButton(holder.binding, newState)
+        }
     }
     
     private fun updateFavoriteButton(binding: ItemPlatformBinding, isFavorite: Boolean) {
@@ -46,10 +58,27 @@ class PlatformAdapter(
             else android.R.drawable.btn_star_big_off
         )
     }
+    
+    private fun updateBlockButton(binding: ItemPlatformBinding, isBlocked: Boolean) {
+        binding.btnBlock.setImageResource(
+            if (isBlocked) android.R.drawable.ic_delete 
+            else android.R.drawable.ic_menu_close_clear_cancel
+        )
+    }
 
     override fun getItemCount() = platforms.size
     
     fun updateData(newPlatforms: List<Platform>) {
+        // 过滤掉被屏蔽的平台
+        val filteredPlatforms = newPlatforms.filter { platform ->
+            !preferenceManager.isPlatformBlocked(platform)
+        }
+        this.platforms = filteredPlatforms
+        notifyDataSetChanged()
+    }
+    
+    // 添加一个不过滤的更新方法，用于屏蔽列表页面
+    fun updateDataWithoutFilter(newPlatforms: List<Platform>) {
         this.platforms = newPlatforms
         notifyDataSetChanged()
     }

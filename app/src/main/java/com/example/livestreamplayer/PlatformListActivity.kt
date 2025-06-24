@@ -46,6 +46,17 @@ class PlatformListActivity : AppCompatActivity() {
                     preferenceManager.removeFavoritePlatform(platform)
                 }
                 platformAdapter.notifyDataSetChanged()
+            },
+            onBlockClick = { platform, isBlocked ->
+                if (isBlocked) {
+                    preferenceManager.addBlockedPlatform(platform)
+                    Toast.makeText(this, "已屏蔽平台: ${platform.title}", Toast.LENGTH_SHORT).show()
+                    // 刷新列表，过滤掉被屏蔽的平台
+                    fetchPlatforms()
+                } else {
+                    preferenceManager.removeBlockedPlatform(platform)
+                    Toast.makeText(this, "已取消屏蔽平台: ${platform.title}", Toast.LENGTH_SHORT).show()
+                }
             }
         )
         

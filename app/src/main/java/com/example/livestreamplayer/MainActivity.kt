@@ -72,10 +72,17 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
         
-        // 设置屏蔽列表卡片点击事件
+        // 设置主播屏蔽列表卡片点击事件
         binding.cardViewBlockedChannels.setOnClickListener {
-            // 跳转到屏蔽列表页面
+            // 跳转到主播屏蔽列表页面
             val intent = Intent(this, BlockedChannelsActivity::class.java)
+            startActivity(intent)
+        }
+        
+        // 设置平台屏蔽列表卡片点击事件
+        binding.cardViewBlockedPlatforms.setOnClickListener {
+            // 跳转到平台屏蔽列表页面
+            val intent = Intent(this, BlockedPlatformsActivity::class.java)
             startActivity(intent)
         }
     }
@@ -99,7 +106,7 @@ class MainActivity : AppCompatActivity() {
                 updateFavoriteChannels()
             }
         )
-        binding.recyclerViewFavoriteChannels.apply {
+        binding.recyclerViewLiveChannels.apply {
             adapter = favoriteChannelAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }

@@ -57,6 +57,9 @@
             
         <activity android:name=".PlatformListActivity" android:exported="false" />
         <activity android:name=".BlockedChannelsActivity" android:exported="false" />
+        
+        <!-- 添加 BlockedPlatformsActivity -->
+        <activity android:name=".BlockedPlatformsActivity" android:exported="false" />
     </application>
 
 </manifest>

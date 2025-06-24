@@ -29,5 +29,12 @@
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/btn_star_big_off" />
+            
+        <ImageButton
+            android:id="@+id/btn_block"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
