@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    // 添加 Kotlin 序列化插件
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -65,13 +67,25 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
 
-    // 新增：添加对 HLS (m3u8) 直播格式的支持
+    // 移除冲突的ExoPlayer版本，只保留一个版本
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
     
-    // 新增：添加对 RTMP 直播格式的支持
-    implementation("androidx.media3:media3-exoplayer:1.3.1")  // 基础ExoPlayer
-    implementation("com.google.android.exoplayer:extension-rtmp:2.18.7")  // RTMP扩展
-
-    // 如果需要RTSP支持，请使用正确的依赖
-    // implementation("androidx.media3:media3-exoplayer-rtsp:1.3.1")
+    // 确保RTMP扩展与ExoPlayer版本兼容
+    implementation("com.google.android.exoplayer:extension-rtmp:2.18.7")  // 更新到兼容版本
+    
+    // 修改 FFmpeg-kit 依赖版本
+    implementation("com.arthenica:ffmpeg-kit-full:5.1.LTS")
+    // 或者尝试这个版本
+    // implementation("com.arthenica:ffmpeg-kit-full:5.1.0")
+    
+    // 文件选择器
+    implementation("androidx.documentfile:documentfile:1.0.1")
+    
+    // WorkManager用于后台任务
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    
+    // 添加 Kotlin 序列化依赖
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }
