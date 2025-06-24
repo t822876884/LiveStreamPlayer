@@ -26,6 +26,34 @@ class MainActivity : AppCompatActivity() {
         setupPlatformRecyclerView()
         setupFavoriteChannelsRecyclerView()
         setupBlockedChannelsRecyclerView()
+        
+        // 设置底部导航栏
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    // 已经在首页，不需要操作
+                    true
+                }
+                R.id.nav_download -> {
+                    val intent = Intent(this, DownloadTasksActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    startActivity(intent)
+                    finish() // 结束当前Activity
+                    true
+                }
+                R.id.nav_settings -> {
+                    val intent = Intent(this, DownloadSettingsActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    startActivity(intent)
+                    finish() // 结束当前Activity
+                    true
+                }
+                else -> false
+            }
+        }
+        
+        // 设置当前选中的导航项
+        binding.bottomNavigation.selectedItemId = R.id.nav_home
     }
     
     override fun onResume() {

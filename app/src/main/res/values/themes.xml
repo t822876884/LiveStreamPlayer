@@ -2,7 +2,13 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.LiveStreamPlayer" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <item name="colorPrimary">@color/black</item>
+        <item name="colorPrimaryVariant">@color/black</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:navigationBarColor">@color/white</item>
+        
+        <!-- 添加底部导航栏样式 -->
+        <item name="bottomNavigationStyle">@style/Widget.App.BottomNavigationView</item>
     </style>
 
     <style name="Theme.LiveStreamPlayer" parent="Base.Theme.LiveStreamPlayer" />
