@@ -93,10 +93,109 @@ class PreferenceManager(context: Context) {
         return getBlockedChannels().any { it.address == channel.address }
     }
 
+    // 下载路径配置
+    fun saveDownloadPath(path: String) {
+        sharedPreferences.edit().putString(KEY_DOWNLOAD_PATH, path).apply()
+    }
+
+    fun getDownloadPath(): String? {
+        return sharedPreferences.getString(KEY_DOWNLOAD_PATH, null)
+    }
+
+    // 下载任务管理
+    fun saveDownloadTask(task: DownloadTask) {
+        val tasks = getDownloadTasks().toMutableList()
+        // 移除相同ID的任务（如果存在）
+        tasks.removeAll { it.id == task.id }
+        tasks.add(task)
+        val json = gson.toJson(tasks)
+        sharedPreferences.edit().putString(KEY_DOWNLOAD_TASKS, json).apply()
+    }
+
+    fun removeDownloadTask(taskId: String) {
+        val tasks = getDownloadTasks().toMutableList()
+        tasks.removeAll { it.id == taskId }
+        val json = gson.toJson(tasks)
+        sharedPreferences.edit().putString(KEY_DOWNLOAD_TASKS, json).apply()
+    }
+
+    fun getDownloadTasks(): List<DownloadTask> {
+        val json = sharedPreferences.getString(KEY_DOWNLOAD_TASKS, null) ?: return emptyList()
+        val type = object : TypeToken<List<DownloadTask>>() {}.type
+        return gson.fromJson(json, type)
+    }
+
+    fun getActiveDownloadTasks(): List<DownloadTask> {
+        return getDownloadTasks().filter { it.status == DownloadStatus.DOWNLOADING }
+    }
+
+    fun getCompletedDownloadTasks(): List<DownloadTask> {
+        return getDownloadTasks().filter { it.status != DownloadStatus.DOWNLOADING }
+    }
+
+    fun updateDownloadTaskStatus(taskId: String, status: DownloadStatus, errorMessage: String? = null) {
+        val tasks = getDownloadTasks().toMutableList()
+        val taskIndex = tasks.indexOfFirst { it.id == taskId }
+        if (taskIndex != -1) {
+            val task = tasks[taskIndex].copy(
+                status = status,
+                errorMessage = errorMessage,
+                endTime = if (status != DownloadStatus.DOWNLOADING) Date() else null
+            )
+            tasks[taskIndex] = task
+            val json = gson.toJson(tasks)
+            sharedPreferences.edit().putString(KEY_DOWNLOAD_TASKS, json).apply()
+        }
+    }
+    
+    // 添加最后播放频道的保存和获取方法
+    fun saveLastPlayedChannel(channel: Channel) {
+        val json = gson.toJson(channel)
+        sharedPreferences.edit().putString(KEY_LAST_PLAYED_CHANNEL, json).apply()
+    }
+    
+    fun getLastPlayedChannel(): Channel? {
+        val json = sharedPreferences.getString(KEY_LAST_PLAYED_CHANNEL, null) ?: return null
+        return gson.fromJson(json, Channel::class.java)
+    }
+
+    // 屏蔽的平台
+    fun addBlockedPlatform(platform: Platform) {
+        val blocked = getBlockedPlatforms().toMutableList()
+        if (!blocked.any { it.address == platform.address }) {
+            blocked.add(platform)
+            val json = gson.toJson(blocked)
+            sharedPreferences.edit().putString(KEY_BLOCKED_PLATFORMS, json).apply()
+        }
+    }
+
+    fun removeBlockedPlatform(platform: Platform) {
+        val blocked = getBlockedPlatforms().toMutableList()
+        blocked.removeAll { it.address == platform.address }
+        val json = gson.toJson(blocked)
+        sharedPreferences.edit().putString(KEY_BLOCKED_PLATFORMS, json).apply()
+    }
+
+    fun getBlockedPlatforms(): List<Platform> {
+        val json = sharedPreferences.getString(KEY_BLOCKED_PLATFORMS, null) ?: return emptyList()
+        val type = object : TypeToken<List<Platform>>() {}.type
+        return gson.fromJson(json, type)
+    }
+
+    fun isPlatformBlocked(platform: Platform): Boolean {
+        return getBlockedPlatforms().any { it.address == platform.address }
+    }
+
     companion object {
         private const val KEY_FAVORITE_PLATFORMS = "favorite_platforms"
         private const val KEY_FAVORITE_CHANNELS = "favorite_channels"
         private const val KEY_BLOCKED_CHANNELS = "blocked_channels"
+        private const val KEY_DOWNLOAD_PATH = "download_path"
+        private const val KEY_DOWNLOAD_TASKS = "download_tasks"
+        // 保留常量定义
+        private const val KEY_LAST_PLAYED_CHANNEL = "last_played_channel"
+        private const val KEY_BLOCKED_PLATFORMS = "blocked_platforms"
+        private const val KEY_LAST_LIVE_REFRESH_TIME = "last_live_refresh_time"
     }
 }
 

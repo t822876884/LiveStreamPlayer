@@ -1,7 +1,9 @@
 package com.example.livestreamplayer
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.example.livestreamplayer.databinding.ItemChannelBinding
 
@@ -11,7 +13,8 @@ class ChannelAdapter(
     private val platformUrl: String = "", // 平台URL，用于收藏主播时关联平台
     private val onItemClick: (Channel) -> Unit,
     private val onFavoriteClick: (Channel, Boolean) -> Unit,
-    private val onBlockClick: (Channel, Boolean) -> Unit
+    private val onBlockClick: (Channel, Boolean) -> Unit,
+    private val onDownloadClick: ((Channel) -> Unit)? = null
 ) : RecyclerView.Adapter<ChannelAdapter.ChannelViewHolder>() {
     
     inner class ChannelViewHolder(val binding: ItemChannelBinding) :
@@ -39,10 +42,16 @@ class ChannelAdapter(
             holder.binding.itemStreamType.text = "直播"
             holder.binding.itemStreamType.setBackgroundResource(android.R.color.holo_red_light)
             holder.binding.itemStreamType.visibility = ViewGroup.VISIBLE
+            
+            // 只有直播才显示下载按钮
+            holder.binding.btnDownload.visibility = ViewGroup.VISIBLE
         } else {
             holder.binding.itemStreamType.text = "录播"
             holder.binding.itemStreamType.setBackgroundResource(android.R.color.holo_blue_light)
             holder.binding.itemStreamType.visibility = ViewGroup.VISIBLE
+            
+            // 录播隐藏下载按钮
+            holder.binding.btnDownload.visibility = ViewGroup.GONE
         }
         
         // 点击频道进入播放器
@@ -60,6 +69,41 @@ class ChannelAdapter(
             val newState = !preferenceManager.isChannelBlocked(channel)
             onBlockClick(channel, newState)
             updateBlockButton(holder.binding, newState)
+        }
+        
+        // 点击下载按钮
+        holder.binding.btnDownload.setOnClickListener {
+            if (channel.isLive) {
+                if (onDownloadClick != null) {
+                    onDownloadClick.invoke(channel)
+                } else {
+                    // 检查是否配置了下载路径
+                    val downloadPath = preferenceManager.getDownloadPath()
+                    if (downloadPath == null) {
+                        // 如果未配置下载路径，提示用户
+                        Toast.makeText(holder.itemView.context, "请先在设置中配置下载路径", Toast.LENGTH_SHORT).show()
+                        
+                        // 跳转到下载设置页面
+                        val intent = Intent(holder.itemView.context, DownloadSettingsActivity::class.java)
+                        holder.itemView.context.startActivity(intent)
+                    } else {
+                        // 创建下载任务
+                        val task = DownloadService.createDownloadTask(holder.itemView.context, channel, channel.title)
+                        if (task != null) {
+                            preferenceManager.saveDownloadTask(task)
+                            
+                            // 启动下载服务
+                            val intent = Intent(holder.itemView.context, DownloadService::class.java).apply {
+                                action = DownloadService.ACTION_START_DOWNLOAD
+                                putExtra(DownloadService.EXTRA_TASK_ID, task.id)
+                            }
+                            holder.itemView.context.startService(intent)
+                            
+                            Toast.makeText(holder.itemView.context, "开始录制: ${channel.title}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
         }
     }
     

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="下载设置"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请选择下载文件保存的目录："
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tv_selected_path"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="未选择下载目录"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btn_select_directory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="选择目录" />
+        
+    <TextView
+        android:id="@+id/tv_storage_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="存储信息：正在加载..." />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btn_save"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="保存设置" />
+
+    <Button
+        android:id="@+id/btn_view_downloads"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="查看已下载文件"
+        android:layout_marginTop="16dp" />
+    
+    <Button
+        android:id="@+id/btn_view_tasks"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="查看下载任务"
+        android:layout_marginTop="8dp" />
+
+</LinearLayout>

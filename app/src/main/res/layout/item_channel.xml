@@ -42,6 +42,13 @@
         </LinearLayout>
 
         <ImageButton
+            android:id="@+id/btn_download"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_save" />
+
+        <ImageButton
             android:id="@+id/btn_favorite"
             android:layout_width="48dp"
             android:layout_height="48dp"
