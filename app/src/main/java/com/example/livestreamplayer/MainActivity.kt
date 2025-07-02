@@ -85,6 +85,13 @@ class MainActivity : AppCompatActivity() {
             val intent = Intent(this, BlockedPlatformsActivity::class.java)
             startActivity(intent)
         }
+        
+        // 设置收藏主播列表卡片点击事件
+        binding.cardViewFavoriteChannels.setOnClickListener {
+            // 跳转到收藏主播列表页面
+            val intent = Intent(this, FavoriteChannelsActivity::class.java)
+            startActivity(intent)
+        }
     }
     
     private fun setupFavoriteChannelsRecyclerView() {
