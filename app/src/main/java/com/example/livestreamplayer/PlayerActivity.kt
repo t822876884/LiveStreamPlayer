@@ -12,9 +12,15 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DefaultDataSource
+import androidx.media3.datasource.rtmp.RtmpDataSourceFactory
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.example.livestreamplayer.databinding.ActivityPlayerBinding
 
 class PlayerActivity : AppCompatActivity() {
@@ -180,31 +186,40 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(UnstableApi::class)
     private fun initializePlayer(url: String) {
-        player = ExoPlayer.Builder(this).build().also { exoPlayer ->
-            binding.playerView.player = exoPlayer
-
-            // 根据URL类型创建适当的MediaItem
-            val mediaItem = when {
-                url.startsWith("rtmp://") -> {
-                    // RTMP流 - 使用正确的MIME类型或不设置MIME类型
-                    MediaItem.Builder()
-                        .setUri(url)
-                        // RTMP不需要特殊的MIME类型设置
-                        // 或者使用通用的应用程序类型
-                        // .setMimeType(MimeTypes.APPLICATION_OCTET_STREAM)
-                        .build()
-                }
-
-                else -> {
-                    // 其他类型的流
-                    MediaItem.fromUri(url)
-                }
+        try {
+            // 1. 根据链接的协议类型，选择正确的数据源工厂 (DataSource.Factory)
+            val dataSourceFactory: DataSource.Factory = if (url.startsWith("rtmp")) {
+                // 如果是rtmp链接，使用RtmpDataSource.Factory
+                RtmpDataSourceFactory()
+            } else {
+                // 对于其他链接 (http, https等)，使用默认的DefaultDataSource.Factory
+                DefaultDataSource.Factory(this)
             }
 
-            exoPlayer.setMediaItem(mediaItem)
-            exoPlayer.playWhenReady = true
-            exoPlayer.prepare()
+            // 2. 使用我们选择的数据源工厂来创建一个媒体源工厂 (MediaSource.Factory)
+            val mediaSourceFactory = DefaultMediaSourceFactory(this)
+                .setDataSourceFactory(dataSourceFactory)
+
+            // 3. 创建ExoPlayer实例时，注入我们自定义的媒体源工厂
+            player = ExoPlayer.Builder(this)
+                .setMediaSourceFactory(mediaSourceFactory) // <-- 这是关键的修改！
+                .build()
+                .also { exoPlayer ->
+                    binding.playerView.player = exoPlayer
+
+                    // MediaItem的创建现在可以简化，因为工厂会自动处理
+                    val mediaItem = MediaItem.fromUri(url)
+
+                    exoPlayer.setMediaItem(mediaItem)
+                    exoPlayer.playWhenReady = true
+                    exoPlayer.prepare()
+                }
+        } catch (e: Exception) {
+            // 增加异常捕获，防止因为URL或协议问题直接导致App崩溃
+            Log.e("PlayerActivity", "初始化播放器失败", e)
+            Toast.makeText(this, "播放失败: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 

@@ -63,29 +63,26 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
 
-    // Media Player (ExoPlayer)
+    // --- Media3 (ExoPlayer) 相关的依赖 ---
+    // 核心播放器库
     implementation("androidx.media3:media3-exoplayer:1.3.1")
+    // UI组件库
     implementation("androidx.media3:media3-ui:1.3.1")
-
-    // 移除冲突的ExoPlayer版本，只保留一个版本
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
+    // HLS (m3u8) 协议支持库
     implementation("androidx.media3:media3-exoplayer-hls:1.3.1")
-    
-    // 确保RTMP扩展与ExoPlayer版本兼容
-    implementation("com.google.android.exoplayer:extension-rtmp:2.18.7")  // 更新到兼容版本
-    
-    // 修改 FFmpeg-kit 依赖版本
+    // RTMP 协议支持库 (这是最终正确的库!)
+    implementation("androidx.media3:media3-datasource-rtmp:1.3.1")
+    // ------------------------------------
+
+    // FFmpeg-kit 依赖
     implementation("com.arthenica:ffmpeg-kit-full:5.1.LTS")
-    // 或者尝试这个版本
-    // implementation("com.arthenica:ffmpeg-kit-full:5.1.0")
-    
+
     // 文件选择器
     implementation("androidx.documentfile:documentfile:1.0.1")
-    
+
     // WorkManager用于后台任务
     implementation("androidx.work:work-runtime-ktx:2.8.1")
-    
-    // 添加 Kotlin 序列化依赖
+
+    // Kotlin 序列化依赖
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 }
