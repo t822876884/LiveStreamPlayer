@@ -1,6 +1,9 @@
 package com.example.livestreamplayer
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -40,28 +43,48 @@ class PlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        
+
         // 添加日志输出
         Log.d("PlayerActivity", "onCreate: 初始化底部导航栏")
-        
+
+        // --- 请将下面这段代码添加到您的 onCreate 方法中 ---
+        binding.btnCopyUrl.setOnClickListener {
+            if (!streamUrl.isNullOrEmpty()) {
+                // 获取系统剪贴板服务
+                val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                // 创建一个 ClipData 对象
+                val clip = ClipData.newPlainText("Stream URL", streamUrl)
+                // 将 ClipData 设置到剪贴板
+                clipboard.setPrimaryClip(clip)
+
+                // 弹出提示，告知用户复制成功
+                Toast.makeText(this, "直播地址已复制到剪贴板", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "没有可复制的地址", Toast.LENGTH_SHORT).show()
+            }
+        }
+
         // 确保底部导航栏可见并设置Z轴层级
         binding.bottomNavigation.visibility = View.VISIBLE
         binding.bottomNavigation.elevation = 10f
         binding.bottomNavigation.bringToFront() // 强制置于顶层
-        
+
         // 添加日志输出底部导航栏状态
-        Log.d("PlayerActivity", "底部导航栏可见性: ${binding.bottomNavigation.visibility == View.VISIBLE}")
-        
+        Log.d(
+            "PlayerActivity",
+            "底部导航栏可见性: ${binding.bottomNavigation.visibility == View.VISIBLE}"
+        )
+
         preferenceManager = PreferenceManager(this)
-        
+
         // 在 onCreate 方法中添加以下代码，位于 preferenceManager 初始化之后
-        
+
         // 检查是否从其他页面传入了流URL和标题
         if (intent.hasExtra(EXTRA_STREAM_URL) && intent.hasExtra(EXTRA_STREAM_TITLE)) {
             streamUrl = intent.getStringExtra(EXTRA_STREAM_URL)
             streamTitle = intent.getStringExtra(EXTRA_STREAM_TITLE)
             title = streamTitle
-            
+
             if (streamUrl != null) {
                 initializePlayer(streamUrl!!)
             }
@@ -72,7 +95,7 @@ class PlayerActivity : AppCompatActivity() {
                 streamUrl = lastPlayedChannel.address
                 streamTitle = lastPlayedChannel.title
                 title = streamTitle
-                
+
                 if (streamUrl != null) {
                     initializePlayer(streamUrl!!)
                 }
@@ -83,10 +106,10 @@ class PlayerActivity : AppCompatActivity() {
                 finish()
             }
         }
-        
+
         // 确保底部导航栏可见
         binding.bottomNavigation.visibility = View.VISIBLE
-        
+
         // 添加底部导航按钮
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -97,6 +120,7 @@ class PlayerActivity : AppCompatActivity() {
                     finish() // 结束当前Activity
                     true
                 }
+
                 R.id.nav_download -> {
                     val intent = Intent(this, DownloadTasksActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -104,6 +128,7 @@ class PlayerActivity : AppCompatActivity() {
                     finish() // 结束当前Activity
                     true
                 }
+
                 R.id.nav_settings -> {
                     val intent = Intent(this, DownloadSettingsActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -111,6 +136,7 @@ class PlayerActivity : AppCompatActivity() {
                     finish() // 结束当前Activity
                     true
                 }
+
                 else -> false
             }
         }
@@ -143,11 +169,13 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 true
             }
+
             R.id.action_download_tasks -> {  // 修改这里，从 action_view_downloads 改为 action_download_tasks
                 val intent = Intent(this, DownloadTasksActivity::class.java)
                 startActivity(intent)
                 true
             }
+
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -155,7 +183,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun initializePlayer(url: String) {
         player = ExoPlayer.Builder(this).build().also { exoPlayer ->
             binding.playerView.player = exoPlayer
-            
+
             // 根据URL类型创建适当的MediaItem
             val mediaItem = when {
                 url.startsWith("rtmp://") -> {
@@ -167,12 +195,13 @@ class PlayerActivity : AppCompatActivity() {
                         // .setMimeType(MimeTypes.APPLICATION_OCTET_STREAM)
                         .build()
                 }
+
                 else -> {
                     // 其他类型的流
                     MediaItem.fromUri(url)
                 }
             }
-            
+
             exoPlayer.setMediaItem(mediaItem)
             exoPlayer.playWhenReady = true
             exoPlayer.prepare()
@@ -192,20 +221,20 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun startDownload() {
         if (streamUrl == null || streamTitle == null) return
-        
+
         val channel = Channel(streamTitle!!, streamUrl!!)
         val task = DownloadService.createDownloadTask(this, channel, streamTitle!!)
-        
+
         if (task != null) {
             preferenceManager.saveDownloadTask(task)
             currentDownloadTaskId = task.id
-            
+
             val intent = Intent(this, DownloadService::class.java).apply {
                 action = DownloadService.ACTION_START_DOWNLOAD
                 putExtra(DownloadService.EXTRA_TASK_ID, task.id)
             }
             startService(intent)
-            
+
             isRecording = true
             invalidateOptionsMenu()
             Toast.makeText(this, "开始录制: $streamTitle", Toast.LENGTH_SHORT).show()
@@ -221,7 +250,7 @@ class PlayerActivity : AppCompatActivity() {
                 putExtra(DownloadService.EXTRA_TASK_ID, taskId)
             }
             startService(intent)
-            
+
             isRecording = false
             invalidateOptionsMenu()
             Toast.makeText(this, "已停止录制", Toast.LENGTH_SHORT).show()

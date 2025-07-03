@@ -1,5 +1,8 @@
 package com.example.livestreamplayer
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -56,7 +59,16 @@ class ChannelAdapter(
         
         // 点击频道进入播放器
         holder.binding.itemTitle.setOnClickListener { onItemClick(channel) }
-        
+
+        // --- 新增：为复制按钮设置点击事件 ---
+        holder.binding.btnCopy.setOnClickListener {
+            val context = holder.itemView.context
+            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val clip = ClipData.newPlainText("Stream URL", channel.address)
+            clipboard.setPrimaryClip(clip)
+            Toast.makeText(context, "地址已复制到剪贴板", Toast.LENGTH_SHORT).show()
+        }
+
         // 点击收藏按钮
         holder.binding.btnFavorite.setOnClickListener {
             val newState = !preferenceManager.isChannelFavorite(channel)

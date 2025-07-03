@@ -10,6 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="8dp">
 
@@ -46,13 +47,23 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="下载"
             android:src="@android:drawable/ic_menu_save" />
+
+        <ImageButton
+            android:id="@+id/btn_copy"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="复制地址"
+            android:src="@drawable/ic_copy" />
 
         <ImageButton
             android:id="@+id/btn_favorite"
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="收藏"
             android:src="@android:drawable/btn_star_big_off" />
 
         <ImageButton
@@ -60,6 +71,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="屏蔽"
             android:src="@android:drawable/ic_menu_close_clear_cancel" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>
