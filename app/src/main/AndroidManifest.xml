@@ -59,6 +59,7 @@
         <activity android:name=".BlockedChannelsActivity" android:exported="false" />
         <activity android:name=".BlockedPlatformsActivity" android:exported="false" />
         <activity android:name=".FavoriteChannelsActivity" android:exported="false" />
+        <activity android:name=".FavoritePlatformsActivity" android:exported="false" />
     </application>
 
 </manifest>

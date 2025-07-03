@@ -21,7 +21,6 @@
             android:layout_gravity="center"
             android:visibility="gone" />
 
-        <!-- 顶部两个并排的方框 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -29,12 +28,43 @@
             android:layout_marginBottom="8dp">
 
             <!-- 平台列表方框 -->
+                <androidx.cardview.widget.CardView
+                    android:id="@+id/cardView_platforms"
+                    android:layout_width="0dp"
+                    android:layout_height="100dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:gravity="center">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="平台列表"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </androidx.cardview.widget.CardView>
+        </LinearLayout>
+
+        <!-- 顶部两个并排的方框 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <!-- 平台收藏列表方框 -->
             <androidx.cardview.widget.CardView
-                android:id="@+id/cardView_platforms"
+                android:id="@+id/cardView_favorite_platforms"
                 android:layout_width="0dp"
                 android:layout_height="100dp"
                 android:layout_weight="1"
-                android:layout_marginEnd="4dp">
+                android:layout_marginStart="4dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -45,12 +75,11 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="平台列表"
+                        android:text="平台收藏列表"
                         android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </androidx.cardview.widget.CardView>
-
             <!-- 平台屏蔽列表方框 -->
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardView_blocked_platforms"
