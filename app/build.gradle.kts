@@ -38,6 +38,16 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            // 只为这两种最主流的手机CPU架构生成APK
+            include("arm64-v8a", "armeabi-v7a")
+            isUniversalApk = false // 不再生成包含所有库的“万能”APK
+        }
+    }
 }
 
 dependencies {
