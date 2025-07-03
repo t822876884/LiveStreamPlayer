@@ -7,7 +7,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.documentfile.provider.DocumentFile  // 添加这一行
+import androidx.documentfile.provider.DocumentFile
 import com.example.livestreamplayer.databinding.ActivityDownloadSettingsBinding
 
 class DownloadSettingsActivity : AppCompatActivity() {
@@ -33,7 +33,7 @@ class DownloadSettingsActivity : AppCompatActivity() {
         binding = ActivityDownloadSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         
-        title = "下载设置"
+        title = "设置"
         preferenceManager = PreferenceManager(this)
         
         updatePathDisplay()
@@ -61,6 +61,32 @@ class DownloadSettingsActivity : AppCompatActivity() {
             val intent = Intent(this, DownloadTasksActivity::class.java)
             startActivity(intent)
         }
+        
+        // 设置底部导航栏
+        binding.bottomNavigation.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> {
+                    val intent = Intent(this, MainActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    startActivity(intent)
+                    finish() // 结束当前Activity
+                    true
+                }
+                R.id.nav_platforms -> {
+                    val intent = Intent(this, PlatformListActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
+                R.id.nav_settings -> {
+                    // 已经在设置页面，不需要操作
+                    true
+                }
+                else -> false
+            }
+        }
+        
+        // 设置当前选中的导航项
+        binding.bottomNavigation.selectedItemId = R.id.nav_settings
     }
     
     private fun updatePathDisplay() {

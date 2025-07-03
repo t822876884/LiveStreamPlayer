@@ -1,20 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView_platforms"
+    <LinearLayout
+        android:id="@+id/buttons_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
 
-</LinearLayout>
+        <!-- 收藏平台按钮 -->
+        <Button
+            android:id="@+id/btn_favorite_platforms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="收藏平台"
+            android:layout_marginEnd="4dp" />
+
+        <!-- 屏蔽平台按钮 -->
+        <Button
+            android:id="@+id/btn_blocked_platforms"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="屏蔽平台"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/buttons_container2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp"
+        app:layout_constraintTop_toBottomOf="@+id/buttons_container"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- 收藏主播按钮 -->
+        <Button
+            android:id="@+id/btn_favorite_channels"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="收藏主播"
+            android:layout_marginEnd="4dp" />
+
+        <!-- 屏蔽主播按钮 -->
+        <Button
+            android:id="@+id/btn_blocked_channels"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="屏蔽主播"
+            android:layout_marginStart="4dp" />
+    </LinearLayout>
+
+    <!-- 平台列表标题 -->
+    <TextView
+        android:id="@+id/tv_platforms_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="平台列表"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:padding="16dp"
+        app:layout_constraintTop_toBottomOf="@+id/buttons_container2"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- 平台列表容器 -->
+    <FrameLayout
+        android:id="@+id/platforms_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@+id/tv_platforms_title"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView_platforms"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="8dp" />
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@android:color/white"
+        android:visibility="visible"
+        android:elevation="8dp"
+        app:itemIconTint="@android:color/black"
+        app:itemTextColor="@android:color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/menu_bottom_navigation" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

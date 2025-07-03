@@ -49,10 +49,10 @@ class PlayerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+    
         // 添加日志输出
-        Log.d("PlayerActivity", "onCreate: 初始化底部导航栏")
-
+        Log.d("PlayerActivity", "onCreate: 初始化播放器")
+    
         // --- 请将下面这段代码添加到您的 onCreate 方法中 ---
         binding.btnCopyUrl.setOnClickListener {
             if (!streamUrl.isNullOrEmpty()) {
@@ -62,7 +62,7 @@ class PlayerActivity : AppCompatActivity() {
                 val clip = ClipData.newPlainText("Stream URL", streamUrl)
                 // 将 ClipData 设置到剪贴板
                 clipboard.setPrimaryClip(clip)
-
+    
                 // 弹出提示，告知用户复制成功
                 Toast.makeText(this, "直播地址已复制到剪贴板", Toast.LENGTH_SHORT).show()
             } else {
@@ -70,20 +70,7 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
-        // 确保底部导航栏可见并设置Z轴层级
-        binding.bottomNavigation.visibility = View.VISIBLE
-        binding.bottomNavigation.elevation = 10f
-        binding.bottomNavigation.bringToFront() // 强制置于顶层
-
-        // 添加日志输出底部导航栏状态
-        Log.d(
-            "PlayerActivity",
-            "底部导航栏可见性: ${binding.bottomNavigation.visibility == View.VISIBLE}"
-        )
-
         preferenceManager = PreferenceManager(this)
-
-        // 在 onCreate 方法中添加以下代码，位于 preferenceManager 初始化之后
 
         // 检查是否从其他页面传入了流URL和标题
         if (intent.hasExtra(EXTRA_STREAM_URL) && intent.hasExtra(EXTRA_STREAM_TITLE)) {
@@ -110,40 +97,6 @@ class PlayerActivity : AppCompatActivity() {
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
                 finish()
-            }
-        }
-
-        // 确保底部导航栏可见
-        binding.bottomNavigation.visibility = View.VISIBLE
-
-        // 添加底部导航按钮
-        binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    val intent = Intent(this, MainActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    startActivity(intent)
-                    finish() // 结束当前Activity
-                    true
-                }
-
-                R.id.nav_download -> {
-                    val intent = Intent(this, DownloadTasksActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    startActivity(intent)
-                    finish() // 结束当前Activity
-                    true
-                }
-
-                R.id.nav_settings -> {
-                    val intent = Intent(this, DownloadSettingsActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-                    startActivity(intent)
-                    finish() // 结束当前Activity
-                    true
-                }
-
-                else -> false
             }
         }
     }

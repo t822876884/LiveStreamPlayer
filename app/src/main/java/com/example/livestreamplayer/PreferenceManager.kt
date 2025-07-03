@@ -199,6 +199,3 @@ class PreferenceManager(context: Context) {
         private const val KEY_LAST_LIVE_REFRESH_TIME = "last_live_refresh_time"
     }
 }
-
-// 收藏的主播需要记录其所属平台
-data class FavoriteChannel(val channel: Channel, val platformUrl: String)

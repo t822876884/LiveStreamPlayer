@@ -2,15 +2,29 @@ package com.example.livestreamplayer
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.livestreamplayer.databinding.ActivityMainBinding
+import kotlinx.coroutines.launch
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var favoriteChannelAdapter: FavoriteChannelAdapter
+    private lateinit var liveChannelAdapter: LiveChannelAdapter
     private lateinit var preferenceManager: PreferenceManager
+    private val handler = Handler(Looper.getMainLooper())
+    private val checkLiveRunnable = object : Runnable {
+        override fun run() {
+            checkLiveChannels()
+            // 每5分钟检查一次
+            handler.postDelayed(this, 5 * 60 * 1000)
+        }
+    }
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,22 +33,20 @@ class MainActivity : AppCompatActivity() {
         
         preferenceManager = PreferenceManager(this)
         
-        setupPlatformRecyclerView()
-        setupFavoriteChannelsRecyclerView()
-        setupBlockedChannelsRecyclerView()
+        setupLiveChannelsRecyclerView()
         
         // 设置底部导航栏
         binding.bottomNavigation.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.nav_home -> {
-                    // 已经在首页，不需要操作
+                    // 点击首页时刷新直播状态
+                    checkLiveChannels()
+                    Toast.makeText(this, "正在刷新直播信息...", Toast.LENGTH_SHORT).show()
                     true
                 }
-                R.id.nav_download -> {
-                    val intent = Intent(this, DownloadTasksActivity::class.java)
-                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                R.id.nav_platforms -> {
+                    val intent = Intent(this, PlatformListActivity::class.java)
                     startActivity(intent)
-                    finish() // 结束当前Activity
                     true
                 }
                 R.id.nav_settings -> {
@@ -50,93 +62,87 @@ class MainActivity : AppCompatActivity() {
         
         // 设置当前选中的导航项
         binding.bottomNavigation.selectedItemId = R.id.nav_home
+        
+        // 启动定时检查直播状态
+        startLiveChannelsCheck()
     }
     
     override fun onResume() {
         super.onResume()
-        // 每次回到主页时只刷新收藏的主播列表，屏蔽列表已移到 BlockedChannelsActivity
-        updateFavoriteChannels()
-        // 移除 updateBlockedChannels() 调用
-    }
-
-    // 替换setupPlatformRecyclerView方法
-    private fun setupPlatformRecyclerView() {
-        // 设置平台卡片点击事件
-        binding.cardViewPlatforms.setOnClickListener {
-            // 跳转到平台列表页面
-            val intent = Intent(this, PlatformListActivity::class.java)
-            startActivity(intent)
-        }
-        
-        // 设置主播屏蔽列表卡片点击事件
-        binding.cardViewBlockedChannels.setOnClickListener {
-            // 跳转到主播屏蔽列表页面
-            val intent = Intent(this, BlockedChannelsActivity::class.java)
-            startActivity(intent)
-        }
-        
-        // 设置平台屏蔽列表卡片点击事件
-        binding.cardViewBlockedPlatforms.setOnClickListener {
-            // 跳转到平台屏蔽列表页面
-            val intent = Intent(this, BlockedPlatformsActivity::class.java)
-            startActivity(intent)
-        }
-        
-        // 设置收藏主播列表卡片点击事件
-        binding.cardViewFavoriteChannels.setOnClickListener {
-            // 跳转到收藏主播列表页面
-            val intent = Intent(this, FavoriteChannelsActivity::class.java)
-            startActivity(intent)
-        }
-
-        // 设置收藏平台列表点击事件
-        binding.cardViewFavoritePlatforms.setOnClickListener {
-            // 跳转到收藏平台列表页面
-            val intent = Intent(this, FavoritePlatformsActivity::class.java)
-            startActivity(intent)
-        }
+        // 检查直播状态
+        checkLiveChannels()
     }
     
-    private fun setupFavoriteChannelsRecyclerView() {
-        favoriteChannelAdapter = FavoriteChannelAdapter(
+    override fun onPause() {
+        super.onPause()
+        // 暂停定时检查
+        handler.removeCallbacks(checkLiveRunnable)
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        // 停止定时检查
+        handler.removeCallbacks(checkLiveRunnable)
+    }
+
+    // 启动定时检查直播状态
+    private fun startLiveChannelsCheck() {
+        handler.post(checkLiveRunnable)
+    }
+    
+    private fun setupLiveChannelsRecyclerView() {
+        liveChannelAdapter = LiveChannelAdapter(
             emptyList(),
             preferenceManager,
-            onItemClick = { favoriteChannel ->
+            onItemClick = { liveChannel ->
                 val intent = Intent(this, PlayerActivity::class.java).apply {
-                    putExtra(PlayerActivity.EXTRA_STREAM_URL, favoriteChannel.channel.address)
-                    putExtra(PlayerActivity.EXTRA_STREAM_TITLE, favoriteChannel.channel.title)
+                    putExtra(PlayerActivity.EXTRA_STREAM_URL, liveChannel.channel.address)
+                    putExtra(PlayerActivity.EXTRA_STREAM_TITLE, liveChannel.channel.title)
                 }
                 startActivity(intent)
-            },
-            onFavoriteClick = { channel, _ ->
-                // 取消收藏
-                preferenceManager.removeFavoriteChannel(channel)
-                Toast.makeText(this, "已取消收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
-                // 更新列表
-                updateFavoriteChannels()
             }
         )
         binding.recyclerViewLiveChannels.apply {
-            adapter = favoriteChannelAdapter
+            adapter = liveChannelAdapter
             layoutManager = LinearLayoutManager(this@MainActivity)
         }
-        
-        // 初始加载收藏的主播
-        updateFavoriteChannels()
     }
     
-    // 新增屏蔽主播列表设置
-    // 修改屏蔽主播列表设置
-    private fun setupBlockedChannelsRecyclerView() {
-        // 只需要设置点击事件
-        binding.cardViewBlockedChannels.setOnClickListener {
-            val intent = Intent(this, BlockedChannelsActivity::class.java)
-            startActivity(intent)
-        }
-    }
-    
-    private fun updateFavoriteChannels() {
+    // 检查收藏的主播中是否有直播中的主播
+    private fun checkLiveChannels() {
         val favoriteChannels = preferenceManager.getFavoriteChannels()
-        favoriteChannelAdapter.updateData(favoriteChannels)
+        if (favoriteChannels.isEmpty()) {
+            // 如果没有收藏的主播，显示提示文本
+            binding.tvNoLiveChannels.visibility = View.VISIBLE
+            binding.recyclerViewLiveChannels.visibility = View.GONE
+            return
+        }
+        
+        // 创建一个列表来存储已确认直播中的主播
+        val liveChannels = mutableListOf<FavoriteChannel>()
+        
+        // 遍历收藏的主播，检查是否有直播中的
+        lifecycleScope.launch {
+            // 首先过滤出可能是直播的频道（根据地址判断）
+            val potentialLiveChannels = favoriteChannels.filter { it.channel.isLive }
+            
+            if (potentialLiveChannels.isNotEmpty()) {
+                // 有可能直播的频道，添加到直播列表
+                liveChannels.addAll(potentialLiveChannels)
+                
+                // 更新UI
+                runOnUiThread {
+                    binding.tvNoLiveChannels.visibility = View.GONE
+                    binding.recyclerViewLiveChannels.visibility = View.VISIBLE
+                    liveChannelAdapter.updateData(liveChannels)
+                }
+            } else {
+                // 没有直播中的主播，显示提示文本
+                runOnUiThread {
+                    binding.tvNoLiveChannels.visibility = View.VISIBLE
+                    binding.recyclerViewLiveChannels.visibility = View.GONE
+                }
+            }
+        }
     }
 }

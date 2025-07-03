@@ -99,10 +99,18 @@ class ChannelListActivity : AppCompatActivity() {
                 val fullUrl = "http://api.hclyz.com:81/mf/$url"
                 val response = RetrofitInstance.api.getChannels(fullUrl)
                 binding.progressBarChannels.visibility = View.GONE
-
+    
                 if (response.isSuccessful && response.body() != null) {
-                    // 更新适配器数据，适配器内部会过滤掉被屏蔽的主播
-                    channelAdapter.updateData(response.body()!!.channels)
+                    // 获取所有频道
+                    val allChannels = response.body()!!.channels
+                    
+                    // 在这里过滤掉被屏蔽的主播
+                    val filteredChannels = allChannels.filter { channel ->
+                        !preferenceManager.isChannelBlocked(channel)
+                    }
+                    
+                    // 更新适配器数据，适配器内部会继续过滤掉以/1.flv或/2.flv结尾的直播间地址
+                    channelAdapter.updateData(filteredChannels)
                 } else {
                     Toast.makeText(
                         this@ChannelListActivity,

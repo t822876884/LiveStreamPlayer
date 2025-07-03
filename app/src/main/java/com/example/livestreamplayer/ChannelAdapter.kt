@@ -141,10 +141,13 @@ class ChannelAdapter(
     }
     
     fun updateData(newChannels: List<Channel>) {
-        // 过滤掉被屏蔽的频道
+        // 只过滤掉以/1.flv或/2.flv结尾的直播间地址
+        // 屏蔽的主播已经在ChannelListActivity中过滤掉了
         val filteredChannels = newChannels.filter { channel ->
-            !preferenceManager.isChannelBlocked(channel)
+            !channel.address.endsWith("/1.flv", ignoreCase = true) && 
+            !channel.address.endsWith("/2.flv", ignoreCase = true)
         }
+        
         this.channels = filteredChannels
         notifyDataSetChanged()
     }
