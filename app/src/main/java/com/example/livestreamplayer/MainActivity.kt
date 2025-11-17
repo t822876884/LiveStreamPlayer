@@ -3,8 +3,6 @@ package com.example.livestreamplayer
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -27,27 +25,18 @@ class MainActivity : AppCompatActivity() {
 
         preferenceManager = PreferenceManager(this)
 
-        setSupportActionBar(binding.toolbar)
         setupLiveChannelsRecyclerView()
         setupBottomNavigation()
         setupSwipeToRefresh()
+        setupSyncButton()
 
         // Initial data load
         syncChannels(isInitialLoad = true)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_main, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.action_sync -> {
-                syncChannels(isInitialLoad = false)
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
+    private fun setupSyncButton() {
+        binding.btnSync.setOnClickListener {
+            syncChannels(isInitialLoad = false)
         }
     }
 
