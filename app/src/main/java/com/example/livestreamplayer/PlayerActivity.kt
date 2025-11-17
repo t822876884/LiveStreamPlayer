@@ -10,11 +10,13 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DefaultDataSource
@@ -31,6 +33,11 @@ class PlayerActivity : AppCompatActivity() {
     private var streamTitle: String? = null
     private var isRecording = false
     private var currentDownloadTaskId: String? = null
+    private val playbackListener = object : Player.Listener {
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            updateKeepScreenOn(isPlaying)
+        }
+    }
 
     private val downloadSettingsLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -160,6 +167,7 @@ class PlayerActivity : AppCompatActivity() {
                 .setMediaSourceFactory(mediaSourceFactory) // <-- 这是关键的修改！
                 .build()
                 .also { exoPlayer ->
+                    exoPlayer.addListener(playbackListener)
                     binding.playerView.player = exoPlayer
 
                     // MediaItem的创建现在可以简化，因为工厂会自动处理
@@ -252,9 +260,19 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun releasePlayer() {
         player?.let {
+            updateKeepScreenOn(false)
+            it.removeListener(playbackListener)
             it.release()
             player = null
             binding.playerView.player = null
+        }
+    }
+
+    private fun updateKeepScreenOn(keep: Boolean) {
+        if (keep) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        } else {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
 }
