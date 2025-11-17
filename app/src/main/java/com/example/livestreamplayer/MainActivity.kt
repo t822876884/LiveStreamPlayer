@@ -3,6 +3,8 @@ package com.example.livestreamplayer
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -25,17 +27,33 @@ class MainActivity : AppCompatActivity() {
 
         preferenceManager = PreferenceManager(this)
 
+        setSupportActionBar(binding.toolbar)
         setupLiveChannelsRecyclerView()
         setupBottomNavigation()
         setupSwipeToRefresh()
 
         // Initial data load
-        checkLiveChannels(isInitialLoad = true)
+        syncChannels(isInitialLoad = true)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.action_sync -> {
+                syncChannels(isInitialLoad = false)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
     }
 
     private fun setupSwipeToRefresh() {
         binding.swipeRefreshLayout.setOnRefreshListener {
-            checkLiveChannels(isInitialLoad = false)
+            syncChannels(isInitialLoad = false)
         }
     }
 
@@ -80,7 +98,7 @@ class MainActivity : AppCompatActivity() {
                 preferenceManager.removeFavoriteChannel(favoriteChannel.channel)
                 Toast.makeText(this, "已取消收藏主播: ${favoriteChannel.channel.title}", Toast.LENGTH_SHORT).show()
                 // Refresh the list locally
-                checkLiveChannels(isInitialLoad = false)
+                syncChannels(isInitialLoad = false)
             },
             onDownloadClick = { channel ->
                 // Handle download logic
@@ -109,8 +127,46 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // 检查收藏的主播中是否有直播中的主播
-    private fun checkLiveChannels(isInitialLoad: Boolean) {
+    private fun syncChannels(isInitialLoad: Boolean) {
+        val favoritePlatforms = preferenceManager.getFavoritePlatforms()
+        if (favoritePlatforms.isNotEmpty()) {
+            checkLiveChannels(isInitialLoad, favoritePlatforms.map { it.address })
+        } else {
+            lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    val response = RetrofitInstance.api.getPlatforms()
+                    if (response.isSuccessful) {
+                        val platformResponse = response.body()
+                        if (platformResponse != null) {
+                            val allPlatforms = platformResponse.platforms
+                            val blockedPlatforms = preferenceManager.getBlockedPlatforms()
+                            val nonBlockedPlatforms = allPlatforms.filter { platform ->
+                                blockedPlatforms.none { blockedPlatform -> blockedPlatform.address == platform.address }
+                            }
+                            val platformsToFetch = nonBlockedPlatforms.take(5)
+                            withContext(Dispatchers.Main) {
+                                checkLiveChannels(isInitialLoad, platformsToFetch.map { it.address })
+                            }
+                        } else {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@MainActivity, "获取平台列表失败", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@MainActivity, "获取平台列表失败", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@MainActivity, "获取平台列表失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun checkLiveChannels(isInitialLoad: Boolean, platformUrls: List<String>) {
         if (isInitialLoad) {
             binding.progressBar.visibility = View.VISIBLE
         } else {
@@ -119,7 +175,7 @@ class MainActivity : AppCompatActivity() {
         binding.tvNoLiveChannels.visibility = View.GONE
         binding.recyclerViewLiveChannels.visibility = View.GONE
 
-        val allFavoriteChannels = preferenceManager.getFavoriteChannels()
+        val allFavoriteChannels = preferenceManager.getFavoriteChannels().filter { platformUrls.contains(it.platformUrl) }
 
         if (allFavoriteChannels.isEmpty()) {
             if (isInitialLoad) {
@@ -135,57 +191,61 @@ class MainActivity : AppCompatActivity() {
         val favoritesByPlatform = allFavoriteChannels.groupBy { it.platformUrl }
         val onlineFavoriteChannels = mutableListOf<FavoriteChannel>()
 
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                favoritesByPlatform.map { (platformUrl, favoriteChannelsOnPlatform) ->
-                    launch {
-                        try {
-                            val fullUrl = "http://api.hclyz.com:81/mf/$platformUrl"
-                            val response = RetrofitInstance.api.getChannels(fullUrl)
-                            if (response.isSuccessful && response.body() != null) {
-                                val currentPlatformChannels = response.body()!!.channels
-                                val onlineFavs = favoriteChannelsOnPlatform
-                                    .mapNotNull { favChannel ->
-                                        currentPlatformChannels.find { it.address == favChannel.channel.address }
-                                            ?.let { updatedChannel ->
-                                                FavoriteChannel(
-                                                    channel = updatedChannel,
-                                                    platformUrl = platformUrl
-                                                )
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    favoritesByPlatform.map { (platformUrl, favoriteChannelsOnPlatform) ->
+                        launch {
+                            try {
+                                val fullUrl = "http://api.hclyz.com:81/mf/$platformUrl"
+                                val response = RetrofitInstance.api.getChannels(fullUrl)
+                                if (response.isSuccessful) {
+                                    val currentPlatformChannels = response.body()?.channels
+                                    if (currentPlatformChannels != null) {
+                                        val onlineFavs = favoriteChannelsOnPlatform
+                                            .mapNotNull { favChannel ->
+                                                currentPlatformChannels.find { it.address == favChannel.channel.address }
+                                                    ?.let { updatedChannel ->
+                                                        FavoriteChannel(
+                                                            channel = updatedChannel,
+                                                            platformUrl = platformUrl
+                                                        )
+                                                    }
                                             }
+                                        synchronized(onlineFavoriteChannels) {
+                                            onlineFavoriteChannels.addAll(onlineFavs)
+                                        }
                                     }
-                                synchronized(onlineFavoriteChannels) {
-                                    onlineFavoriteChannels.addAll(onlineFavs)
+                                } else {
+                                    Log.w(
+                                        "MainActivity",
+                                        "Failed to fetch channels for $platformUrl: ${response.code()}"
+                                    )
                                 }
-                            } else {
-                                Log.w(
-                                    "MainActivity",
-                                    "Failed to fetch channels for $platformUrl: ${response.code()}"
-                                )
+                            } catch (e: Exception) {
+                                Log.e("MainActivity", "Exception fetching channels for $platformUrl", e)
                             }
-                        } catch (e: Exception) {
-                            Log.e("MainActivity", "Exception fetching channels for $platformUrl", e)
                         }
-                    }
-                }.forEach { it.join() }
-            } finally {
-                val channelsToShow = onlineFavoriteChannels.filter { it.channel.address.isNotBlank() }
+                    }.forEach { it.join() }
+                } finally {
+                    val channelsToShow = onlineFavoriteChannels.filter { it.channel.address.isNotBlank() }
 
-                withContext(Dispatchers.Main) {
-                    if (isInitialLoad) {
-                        binding.progressBar.visibility = View.GONE
-                    } else {
-                        binding.swipeRefreshLayout.isRefreshing = false
-                    }
+                    withContext(Dispatchers.Main) {
+                        if (isInitialLoad) {
+                            binding.progressBar.visibility = View.GONE
+                        } else {
+                            binding.swipeRefreshLayout.isRefreshing = false
+                        }
 
-                    if (channelsToShow.isEmpty()) {
-                        binding.tvNoLiveChannels.visibility = View.VISIBLE
-                        binding.recyclerViewLiveChannels.visibility = View.GONE
-                    } else {
-                        binding.tvNoLiveChannels.visibility = View.GONE
-                        binding.recyclerViewLiveChannels.visibility = View.VISIBLE
+                        if (channelsToShow.isEmpty()) {
+                            binding.tvNoLiveChannels.visibility = View.VISIBLE
+                            binding.recyclerViewLiveChannels.visibility = View.GONE
+                        } else {
+                            binding.tvNoLiveChannels.visibility = View.GONE
+                            binding.recyclerViewLiveChannels.visibility = View.VISIBLE
+                        }
+                        liveChannelAdapter.updateData(channelsToShow)
                     }
-                    liveChannelAdapter.updateData(channelsToShow)
                 }
             }
         }
