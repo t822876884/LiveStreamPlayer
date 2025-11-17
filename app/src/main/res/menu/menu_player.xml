@@ -7,6 +7,11 @@
         android:title="开始录制"
         android:icon="@android:drawable/ic_media_play"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/action_remote_download"
+        android:title="远程下载"
+        app:showAsAction="never" />
         
     <item
         android:id="@+id/action_download_settings"

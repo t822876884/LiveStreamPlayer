@@ -38,13 +38,16 @@ class DownloadSettingsActivity : AppCompatActivity() {
         
         updatePathDisplay()
         updateStorageInfo()
+        loadRemoteDownloadUrl()
         
         binding.btnSelectDirectory.setOnClickListener {
             openDirectoryPicker()
         }
         
         binding.btnSave.setOnClickListener {
+            saveRemoteDownloadUrl()
             if (preferenceManager.getDownloadPath() != null) {
+                Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show()
                 setResult(Activity.RESULT_OK)
                 finish()
             } else {
@@ -87,6 +90,20 @@ class DownloadSettingsActivity : AppCompatActivity() {
         
         // 设置当前选中的导航项
         binding.bottomNavigation.selectedItemId = R.id.nav_settings
+    }
+    
+    private fun loadRemoteDownloadUrl() {
+        val url = preferenceManager.getRemoteDownloadUrl()
+        if (url != null) {
+            binding.etRemoteDownloadUrl.setText(url)
+        }
+    }
+
+    private fun saveRemoteDownloadUrl() {
+        val url = binding.etRemoteDownloadUrl.text.toString().trim()
+        if (url.isNotEmpty()) {
+            preferenceManager.saveRemoteDownloadUrl(url)
+        }
     }
     
     private fun updatePathDisplay() {

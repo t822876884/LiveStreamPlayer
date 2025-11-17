@@ -187,6 +187,15 @@ class PreferenceManager(context: Context) {
         return getBlockedPlatforms().any { it.address == platform.address }
     }
 
+    // 远程下载地址
+    fun saveRemoteDownloadUrl(url: String) {
+        sharedPreferences.edit().putString(KEY_REMOTE_DOWNLOAD_URL, url).apply()
+    }
+
+    fun getRemoteDownloadUrl(): String? {
+        return sharedPreferences.getString(KEY_REMOTE_DOWNLOAD_URL, null)
+    }
+
     companion object {
         private const val KEY_FAVORITE_PLATFORMS = "favorite_platforms"
         private const val KEY_FAVORITE_CHANNELS = "favorite_channels"
@@ -197,5 +206,6 @@ class PreferenceManager(context: Context) {
         private const val KEY_LAST_PLAYED_CHANNEL = "last_played_channel"
         private const val KEY_BLOCKED_PLATFORMS = "blocked_platforms"
         private const val KEY_LAST_LIVE_REFRESH_TIME = "last_live_refresh_time"
+        private const val KEY_REMOTE_DOWNLOAD_URL = "remote_download_url"
     }
 }

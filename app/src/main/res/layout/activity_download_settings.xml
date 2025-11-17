@@ -49,6 +49,20 @@
             android:layout_marginBottom="16dp"
             android:text="存储信息：正在加载..." />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="远程下载地址："
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_remote_download_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="http://localhost:3180/download"
+            android:inputType="textUri"
+            android:layout_marginBottom="16dp" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"

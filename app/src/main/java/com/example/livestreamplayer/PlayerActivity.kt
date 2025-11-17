@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -24,6 +25,14 @@ import androidx.media3.datasource.rtmp.RtmpDataSourceFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import com.example.livestreamplayer.databinding.ActivityPlayerBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 
 class PlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPlayerBinding
@@ -135,14 +144,69 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 true
             }
-
-            R.id.action_download_tasks -> {  // 修改这里，从 action_view_downloads 改为 action_download_tasks
+            R.id.action_remote_download -> {
+                sendRemoteDownloadRequest()
+                true
+            }
+            R.id.action_download_tasks -> {
                 val intent = Intent(this, DownloadTasksActivity::class.java)
                 startActivity(intent)
                 true
             }
-
+            R.id.action_download_settings -> {
+                val intent = Intent(this, DownloadSettingsActivity::class.java)
+                startActivity(intent)
+                true
+            }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun sendRemoteDownloadRequest() {
+        val remoteUrl = preferenceManager.getRemoteDownloadUrl()
+        if (remoteUrl.isNullOrEmpty()) {
+            Toast.makeText(this, "请先在设置中配置远程下载地址", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (streamUrl.isNullOrEmpty() || streamTitle.isNullOrEmpty()) {
+            Toast.makeText(this, "没有可下载的直播", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val client = OkHttpClient()
+                val json = JSONObject().apply {
+                    put("title", streamTitle)
+                    put("url", streamUrl)
+                }
+                val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
+                val request = Request.Builder()
+                    .url(remoteUrl)
+                    .post(requestBody)
+                    .build()
+
+                client.newCall(request).execute().use { response ->
+                    val responseBody = response.body?.string()
+                    if (response.isSuccessful && responseBody != null) {
+                        val jsonResponse = JSONObject(responseBody)
+                        val message = jsonResponse.optString("message", "请求成功")
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        val message = response.body?.string() ?: "请求失败"
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@PlayerActivity, "远程下载请求失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
         }
     }
 
