@@ -154,12 +154,22 @@ class MainActivity : AppCompatActivity() {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@MainActivity, "获取平台列表失败", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, "获取平台列表失败: ${response.code()}", Toast.LENGTH_SHORT).show()
                         }
                     }
                 } catch (e: Exception) {
                     withContext(Dispatchers.Main) {
-                        Toast.makeText(this@MainActivity, "获取平台列表失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                        when (e) {
+                            is java.net.UnknownHostException -> {
+                                Toast.makeText(this@MainActivity, "网络连接失败，请检查网络设置", Toast.LENGTH_SHORT).show()
+                            }
+                            is retrofit2.HttpException -> {
+                                Toast.makeText(this@MainActivity, "获取平台列表失败: ${e.code()}", Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {
+                                Toast.makeText(this@MainActivity, "获取平台列表失败: ${e.message}", Toast.LENGTH_SHORT).show()
+                            }
+                        }
                     }
                 }
             }
@@ -223,7 +233,19 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             } catch (e: Exception) {
-                                Log.e("MainActivity", "Exception fetching channels for $platformUrl", e)
+                                withContext(Dispatchers.Main) {
+                                    when (e) {
+                                        is java.net.UnknownHostException -> {
+                                            Toast.makeText(this@MainActivity, "网络连接失败，请检查网络设置", Toast.LENGTH_SHORT).show()
+                                        }
+                                        is retrofit2.HttpException -> {
+                                            Toast.makeText(this@MainActivity, "获取频道列表失败: ${e.code()}", Toast.LENGTH_SHORT).show()
+                                        }
+                                        else -> {
+                                            Log.e("MainActivity", "Exception fetching channels for $platformUrl", e)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }.forEach { it.join() }
