@@ -226,7 +226,7 @@ class PreferenceManager(context: Context) {
         private const val KEY_REMOTE_DOWNLOAD_URL = "remote_download_url"
         private const val KEY_CHANNEL_API_PREFIX = "channel_api_prefix"
         private const val DEFAULT_CHANNEL_API_PREFIX = "http://api.hclyz.com:81/mf"
-        private const val DEFAULT_REMOTE_DOWNLOAD_URL = "http://www.530312.xyz:3180"
+        private const val DEFAULT_REMOTE_DOWNLOAD_URL = "http://127.0.0.1:3180"
         private const val KEY_REMOTE_AUTH_TOKEN = "remote_auth_token"
     }
 }
