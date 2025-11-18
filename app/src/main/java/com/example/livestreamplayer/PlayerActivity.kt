@@ -145,23 +145,11 @@ class PlayerActivity : AppCompatActivity() {
                 binding.tvHeaderTitle.text = platformTitleForSwipe
             }
         } else {
-            // 默认加载内容（可以是上次播放的内容或推荐内容）
-            val lastPlayedChannel = preferenceManager.getLastPlayedChannel()
-            if (lastPlayedChannel != null) {
-                streamUrl = lastPlayedChannel.address
-                streamTitle = lastPlayedChannel.title
-                title = streamTitle
-                binding.tvHeaderTitle.text = streamTitle
-
-                if (streamUrl != null) {
-                    initializePlayer(streamUrl!!)
-                }
-            } else {
-                // 如果没有上次播放记录，显示主页
-                val intent = Intent(this, MainActivity::class.java)
-                startActivity(intent)
-                finish()
-            }
+            // 未携带播放参数时，直接返回首页
+            val intent = Intent(this, MainActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            startActivity(intent)
+            finish()
         }
     }
 
