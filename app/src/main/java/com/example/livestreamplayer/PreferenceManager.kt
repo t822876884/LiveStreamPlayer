@@ -196,6 +196,14 @@ class PreferenceManager(context: Context) {
         return sharedPreferences.getString(KEY_REMOTE_DOWNLOAD_URL, DEFAULT_REMOTE_DOWNLOAD_URL)
     }
 
+    fun saveRemoteAuthToken(token: String) {
+        sharedPreferences.edit().putString(KEY_REMOTE_AUTH_TOKEN, token).apply()
+    }
+
+    fun getRemoteAuthToken(): String? {
+        return sharedPreferences.getString(KEY_REMOTE_AUTH_TOKEN, null)
+    }
+
     fun saveChannelApiPrefix(url: String) {
         sharedPreferences.edit().putString(KEY_CHANNEL_API_PREFIX, url).apply()
     }
@@ -219,5 +227,6 @@ class PreferenceManager(context: Context) {
         private const val KEY_CHANNEL_API_PREFIX = "channel_api_prefix"
         private const val DEFAULT_CHANNEL_API_PREFIX = "http://api.hclyz.com:81/mf"
         private const val DEFAULT_REMOTE_DOWNLOAD_URL = "http://www.530312.xyz:3180"
+        private const val KEY_REMOTE_AUTH_TOKEN = "remote_auth_token"
     }
 }

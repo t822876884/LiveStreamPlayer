@@ -39,18 +39,23 @@ class RemoteDownloadApi(private val context: Context) {
         }
     }
 
-    suspend fun cancelDownload(taskId: String): ApiResponse {
+    suspend fun cancelDownload(taskId: String?, title: String?): ApiResponse {
         return withContext(Dispatchers.IO) {
             val baseUrl = getBaseUrl() ?: return@withContext ApiResponse(false, "远程下载地址未配置")
             val url = "$baseUrl/cancel"
             val json = JSONObject().apply {
-                put("id", taskId)
+                if (!taskId.isNullOrBlank()) put("id", taskId) else if (!title.isNullOrBlank()) put("title", title)
             }
             val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-            val request = Request.Builder()
+            val builder = Request.Builder()
                 .url(url)
                 .post(requestBody)
-                .build()
+                .addHeader("Accept", "application/json")
+                .addHeader("Content-Type", "application/json")
+            PreferenceManager(context).getRemoteAuthToken()?.let { token ->
+                if (token.isNotBlank()) builder.addHeader("Authorization", "Bearer $token")
+            }
+            val request = builder.build()
 
             try {
                 client.newCall(request).execute().use { response ->
@@ -72,10 +77,15 @@ class RemoteDownloadApi(private val context: Context) {
                 put("id", taskId)
             }
             val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-            val request = Request.Builder()
+            val builder = Request.Builder()
                 .url(url)
                 .post(requestBody)
-                .build()
+                .addHeader("Accept", "application/json")
+                .addHeader("Content-Type", "application/json")
+            PreferenceManager(context).getRemoteAuthToken()?.let { token ->
+                if (token.isNotBlank()) builder.addHeader("Authorization", "Bearer $token")
+            }
+            val request = builder.build()
 
             try {
                 client.newCall(request).execute().use { response ->
@@ -186,6 +196,11 @@ class RemoteDownloadApi(private val context: Context) {
         }
     }
 
+    fun getCompletedFileStreamUrl(taskId: String): String? {
+        val baseUrl = getBaseUrl() ?: return null
+        return "$baseUrl/file?id=$taskId"
+    }
+
     private fun optStringMulti(json: JSONObject, vararg keys: String): String {
         for (k in keys) {
             val v = json.optString(k, "")
@@ -206,7 +221,9 @@ class RemoteDownloadApi(private val context: Context) {
             val jsonResponse = JSONObject(responseBody)
             val ok = jsonResponse.optBoolean("ok", false)
             val message = jsonResponse.optString("message", "未知错误")
-            com.example.livestreamplayer.ApiResponse(ok, message)
+            val taskId = jsonResponse.optString("taskId", null)
+            val id = jsonResponse.optString("id", null)
+            com.example.livestreamplayer.ApiResponse(ok, message, taskId = if (taskId.isNullOrEmpty()) null else taskId, id = if (id.isNullOrEmpty()) null else id)
         } catch (e: JSONException) {
             com.example.livestreamplayer.ApiResponse(false, "解析错误: ${e.message}")
         }

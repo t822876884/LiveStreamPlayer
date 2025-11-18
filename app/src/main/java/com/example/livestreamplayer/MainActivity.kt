@@ -76,6 +76,14 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNavigation.selectedItemId = R.id.nav_home
     }
 
+    override fun onResume() {
+        super.onResume()
+        // 确保返回首页时底部导航高亮同步为“首页”
+        if (binding.bottomNavigation.selectedItemId != R.id.nav_home) {
+            binding.bottomNavigation.selectedItemId = R.id.nav_home
+        }
+    }
+
     private fun setupLiveChannelsRecyclerView() {
         liveChannelAdapter = LiveChannelAdapter(
             emptyList(),

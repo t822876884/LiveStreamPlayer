@@ -266,8 +266,8 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun sendRemoteDownloadRequest() {
-        val remoteUrl = preferenceManager.getRemoteDownloadUrl()
-        if (remoteUrl.isNullOrEmpty()) {
+        val base = preferenceManager.getRemoteDownloadUrl()
+        if (base.isNullOrEmpty()) {
             Toast.makeText(this, "请先在设置中配置远程下载地址", Toast.LENGTH_SHORT).show()
             return
         }
@@ -281,27 +281,36 @@ class PlayerActivity : AppCompatActivity() {
             try {
                 val client = OkHttpClient()
                 val json = JSONObject().apply {
-                    put("title", streamTitle)
-                    put("url", streamUrl)
+                    put("title", (streamTitle ?: "").trim())
+                    put("url", (streamUrl ?: "").replace("`", "").trim())
                 }
                 val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaType())
-                val request = Request.Builder()
-                    .url(remoteUrl)
+                val endpoint = if (base.endsWith("/download")) base else base.trimEnd('/') + "/download"
+                val builder = Request.Builder()
+                    .url(endpoint)
                     .post(requestBody)
-                    .build()
+                    .addHeader("Accept", "application/json")
+                    .addHeader("Content-Type", "application/json")
+                preferenceManager.getRemoteAuthToken()?.let { token ->
+                    if (token.isNotBlank()) builder.addHeader("Authorization", "Bearer $token")
+                }
+                val request = builder.build()
 
                 client.newCall(request).execute().use { response ->
                     val responseBody = response.body?.string()
                     if (response.isSuccessful && responseBody != null) {
                         val jsonResponse = JSONObject(responseBody)
-                        val message = jsonResponse.optString("message", "请求成功")
+                        val ok = jsonResponse.optBoolean("ok", false)
+                        val message = jsonResponse.optString("message", if (ok) "下载任务已启动" else "请求失败")
+                        val taskObj = jsonResponse.optJSONObject("task")
+                        val taskId = taskObj?.optString("id")
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@PlayerActivity, if (!taskId.isNullOrEmpty()) "$message: $taskId" else message, Toast.LENGTH_SHORT).show()
                         }
                     } else {
-                        val message = response.body?.string() ?: "请求失败"
+                        val msg = responseBody ?: "请求失败: ${response.code}"
                         withContext(Dispatchers.Main) {
-                            Toast.makeText(this@PlayerActivity, message, Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }

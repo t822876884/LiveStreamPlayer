@@ -55,14 +55,16 @@ class CompletedFragment : Fragment() {
                 }
             },
             onPlayClick = { context, task ->
-                if (task.outputPath != null && task.outputPath.isNotEmpty()) {
+                val stream = remoteDownloadApi.getCompletedFileStreamUrl(task.id)
+                val finalUrl = if (!stream.isNullOrEmpty()) stream else task.streamUrl
+                if (!finalUrl.isNullOrEmpty()) {
                     val intent = Intent(context, PlayerActivity::class.java).apply {
-                        putExtra(PlayerActivity.EXTRA_STREAM_URL, task.outputPath)
+                        putExtra(PlayerActivity.EXTRA_STREAM_URL, finalUrl)
                         putExtra(PlayerActivity.EXTRA_STREAM_TITLE, task.channelTitle)
                     }
                     context.startActivity(intent)
                 } else {
-                    Toast.makeText(context, "文件路径无效", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "无法获取文件播放地址", Toast.LENGTH_SHORT).show()
                 }
             }
         )

@@ -47,6 +47,13 @@ class PlatformListActivity : AppCompatActivity() {
                     // 已经在平台页面，不需要操作
                     true
                 }
+                R.id.nav_downloads -> {
+                    val intent = Intent(this, DownloadsActivity::class.java)
+                    intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    startActivity(intent)
+                    finish()
+                    true
+                }
                 R.id.nav_settings -> {
                     val intent = Intent(this, DownloadSettingsActivity::class.java)
                     startActivity(intent)
