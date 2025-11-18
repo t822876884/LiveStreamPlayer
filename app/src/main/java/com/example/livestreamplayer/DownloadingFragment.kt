@@ -46,7 +46,7 @@ class DownloadingFragment : Fragment() {
             mutableListOf(),
             onCancelClick = { context, task ->
                 lifecycleScope.launch {
-                    val response = remoteDownloadApi.cancelDownload(task.id)
+                    val response = remoteDownloadApi.cancelDownload(task.id, task.channelTitle)
                     Toast.makeText(context, response.message, Toast.LENGTH_SHORT).show()
                     if (response.ok) {
                         loadDownloadingTasks()
