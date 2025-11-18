@@ -73,14 +73,20 @@ class ChannelAdapter(
         holder.binding.btnFavorite.setOnClickListener {
             val newState = !preferenceManager.isChannelFavorite(channel)
             onFavoriteClick(channel, newState)
-            updateFavoriteButton(holder.binding, newState)
+            val fav = preferenceManager.isChannelFavorite(channel)
+            val blk = preferenceManager.isChannelBlocked(channel)
+            updateFavoriteButton(holder.binding, fav)
+            updateBlockButton(holder.binding, blk)
         }
         
         // 点击屏蔽按钮
         holder.binding.btnBlock.setOnClickListener {
             val newState = !preferenceManager.isChannelBlocked(channel)
             onBlockClick(channel, newState)
-            updateBlockButton(holder.binding, newState)
+            val fav = preferenceManager.isChannelFavorite(channel)
+            val blk = preferenceManager.isChannelBlocked(channel)
+            updateFavoriteButton(holder.binding, fav)
+            updateBlockButton(holder.binding, blk)
         }
         
         // 点击下载按钮
@@ -141,10 +147,9 @@ class ChannelAdapter(
     }
     
     fun updateData(newChannels: List<Channel>) {
-        // 只过滤掉以/1.flv或/2.flv结尾的直播间地址
-        // 屏蔽的主播已经在ChannelListActivity中过滤掉了
         val filteredChannels = newChannels.filter { channel ->
-            !channel.address.endsWith("/1.flv", ignoreCase = true) && 
+            !preferenceManager.isChannelBlocked(channel) &&
+            !channel.address.endsWith("/1.flv", ignoreCase = true) &&
             !channel.address.endsWith("/2.flv", ignoreCase = true)
         }
         

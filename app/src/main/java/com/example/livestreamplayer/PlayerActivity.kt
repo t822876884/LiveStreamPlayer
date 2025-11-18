@@ -100,6 +100,8 @@ class PlayerActivity : AppCompatActivity() {
                     Toast.makeText(this, "已取消收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
                 } else {
                     preferenceManager.saveFavoriteChannel(channel, platformUrlForSwipe ?: "")
+                    // 互斥：收藏后取消屏蔽
+                    preferenceManager.removeBlockedChannel(channel)
                     Toast.makeText(this, "已收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -115,6 +117,8 @@ class PlayerActivity : AppCompatActivity() {
                     Toast.makeText(this, "已取消屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
                 } else {
                     preferenceManager.addBlockedChannel(channel)
+                    // 互斥：屏蔽后取消收藏
+                    preferenceManager.removeFavoriteChannel(channel)
                     Toast.makeText(this, "已屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
                 }
             }
@@ -130,6 +134,14 @@ class PlayerActivity : AppCompatActivity() {
             streamTitle = intent.getStringExtra(EXTRA_STREAM_TITLE)
             title = streamTitle
             binding.tvHeaderTitle.text = streamTitle
+
+            val blocked = streamTitle?.let { preferenceManager.isChannelBlockedByTitle(it) } == true ||
+                    (streamTitle != null && streamUrl != null && preferenceManager.isChannelBlocked(Channel(streamTitle!!, streamUrl!!)))
+            if (blocked) {
+                Toast.makeText(this, "该主播已被屏蔽", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
 
             if (streamUrl != null) {
                 initializePlayer(streamUrl!!)

@@ -187,7 +187,9 @@ class MainActivity : AppCompatActivity() {
         binding.tvNoLiveChannels.visibility = View.GONE
         binding.recyclerViewLiveChannels.visibility = View.GONE
 
-        val allFavoriteChannels = preferenceManager.getFavoriteChannels().filter { platformUrls.contains(it.platformUrl) }
+        val allFavoriteChannels = preferenceManager.getFavoriteChannels()
+            .filter { platformUrls.contains(it.platformUrl) }
+            .filter { !preferenceManager.isChannelBlocked(it.channel) }
 
         if (allFavoriteChannels.isEmpty()) {
             if (isInitialLoad) {

@@ -43,7 +43,9 @@ class PreferenceManager(context: Context) {
     fun saveFavoriteChannel(channel: Channel, platformUrl: String) {
         val favoriteChannel = FavoriteChannel(channel, platformUrl)
         val favorites = getFavoriteChannels().toMutableList()
-        if (!favorites.any { it.channel.address == channel.address }) {
+        // 互斥：收藏前先移除屏蔽
+        removeBlockedChannel(channel)
+        if (!favorites.any { it.channel.address == channel.address || it.channel.title.equals(channel.title, true) }) {
             favorites.add(favoriteChannel)
             val json = gson.toJson(favorites)
             sharedPreferences.edit().putString(KEY_FAVORITE_CHANNELS, json).apply()
@@ -52,7 +54,7 @@ class PreferenceManager(context: Context) {
 
     fun removeFavoriteChannel(channel: Channel) {
         val favorites = getFavoriteChannels().toMutableList()
-        favorites.removeAll { it.channel.address == channel.address }
+        favorites.removeAll { it.channel.address == channel.address || it.channel.title.equals(channel.title, true) }
         val json = gson.toJson(favorites)
         sharedPreferences.edit().putString(KEY_FAVORITE_CHANNELS, json).apply()
     }
@@ -64,13 +66,18 @@ class PreferenceManager(context: Context) {
     }
 
     fun isChannelFavorite(channel: Channel): Boolean {
-        return getFavoriteChannels().any { it.channel.address == channel.address }
+        val title = channel.title.trim().lowercase()
+        return getFavoriteChannels().any {
+            it.channel.address == channel.address || it.channel.title.trim().lowercase() == title
+        }
     }
 
     // 屏蔽的主播
     fun addBlockedChannel(channel: Channel) {
         val blocked = getBlockedChannels().toMutableList()
-        if (!blocked.any { it.address == channel.address }) {
+        // 互斥：屏蔽前先取消收藏
+        removeFavoriteChannel(channel)
+        if (!blocked.any { it.address == channel.address || it.title.equals(channel.title, true) }) {
             blocked.add(channel)
             val json = gson.toJson(blocked)
             sharedPreferences.edit().putString(KEY_BLOCKED_CHANNELS, json).apply()
@@ -79,7 +86,7 @@ class PreferenceManager(context: Context) {
 
     fun removeBlockedChannel(channel: Channel) {
         val blocked = getBlockedChannels().toMutableList()
-        blocked.removeAll { it.address == channel.address }
+        blocked.removeAll { it.address == channel.address || it.title.equals(channel.title, true) }
         val json = gson.toJson(blocked)
         sharedPreferences.edit().putString(KEY_BLOCKED_CHANNELS, json).apply()
     }
@@ -91,7 +98,15 @@ class PreferenceManager(context: Context) {
     }
 
     fun isChannelBlocked(channel: Channel): Boolean {
-        return getBlockedChannels().any { it.address == channel.address }
+        val title = channel.title.trim().lowercase()
+        return getBlockedChannels().any {
+            it.address == channel.address || it.title.trim().lowercase() == title
+        }
+    }
+
+    fun isChannelBlockedByTitle(title: String): Boolean {
+        val norm = title.trim().lowercase()
+        return getBlockedChannels().any { it.title.trim().lowercase() == norm }
     }
 
     // 下载路径配置

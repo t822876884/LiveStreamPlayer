@@ -65,6 +65,8 @@ class ChannelListActivity : AppCompatActivity() {
             onFavoriteClick = { channel, isFavorite ->
                 if (isFavorite && platformUrl != null) {
                     preferenceManager.saveFavoriteChannel(channel, platformUrl!!)
+                    // 互斥：收藏后确保取消屏蔽
+                    preferenceManager.removeBlockedChannel(channel)
                     Toast.makeText(this, "已收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
                 } else {
                     preferenceManager.removeFavoriteChannel(channel)
@@ -74,15 +76,15 @@ class ChannelListActivity : AppCompatActivity() {
             onBlockClick = { channel, isBlocked ->
                 if (isBlocked) {
                     preferenceManager.addBlockedChannel(channel)
+                    // 互斥：屏蔽后确保取消收藏
+                    preferenceManager.removeFavoriteChannel(channel)
                     Toast.makeText(this, "已屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
-                    // 不再使用有问题的currentList，而是重新获取频道列表
                     if (platformUrl != null) {
                         fetchChannels(platformUrl!!)
                     }
                 } else {
                     preferenceManager.removeBlockedChannel(channel)
                     Toast.makeText(this, "已取消屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
-                    // 重新获取频道列表
                     if (platformUrl != null) {
                         fetchChannels(platformUrl!!)
                     }

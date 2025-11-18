@@ -81,7 +81,9 @@ class LiveChannelAdapter(
     override fun getItemCount() = liveChannels.size
 
     fun updateData(newLiveChannels: List<FavoriteChannel>) {
-        this.liveChannels = newLiveChannels
+        this.liveChannels = newLiveChannels.filter { fc ->
+            !preferenceManager.isChannelBlocked(fc.channel)
+        }
         notifyDataSetChanged()
     }
 }
