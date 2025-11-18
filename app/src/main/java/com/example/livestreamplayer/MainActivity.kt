@@ -58,6 +58,11 @@ class MainActivity : AppCompatActivity() {
                     startActivity(intent)
                     true
                 }
+                R.id.nav_downloads -> {
+                    val intent = Intent(this, DownloadsActivity::class.java)
+                    startActivity(intent)
+                    true
+                }
                 R.id.nav_settings -> {
                     val intent = Intent(this, DownloadSettingsActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -196,7 +201,8 @@ class MainActivity : AppCompatActivity() {
                     favoritesByPlatform.map { (platformUrl, favoriteChannelsOnPlatform) ->
                         launch {
                             try {
-                                val fullUrl = "http://api.hclyz.com:81/mf/$platformUrl"
+                                val prefix = preferenceManager.getChannelApiPrefix()
+                                val fullUrl = "$prefix/$platformUrl"
                                 val response = RetrofitInstance.api.getChannels(fullUrl)
                                 if (response.isSuccessful) {
                                     val currentPlatformChannels = response.body()?.channels

@@ -40,6 +40,7 @@ class DownloadingAdapter(
         fun bind(task: DownloadTask) {
             binding.tvTaskName.text = task.channelTitle
             binding.btnCancel.setOnClickListener { onCancelClick(itemView.context, task) }
+            binding.btnPlay.isEnabled = task.streamUrl.isNotEmpty()
             binding.btnPlay.setOnClickListener { onPlayClick(itemView.context, task) }
         }
     }

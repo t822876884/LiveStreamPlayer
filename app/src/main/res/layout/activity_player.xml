@@ -5,6 +5,18 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
+    <TextView
+        android:id="@+id/tv_header_title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
+        android:background="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
     <androidx.media3.ui.PlayerView
         android:id="@+id/player_view"
         android:layout_width="0dp"
@@ -12,20 +24,72 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/tv_header_title" />
+
+    <LinearLayout
+        android:id="@+id/more_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="88dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <ImageButton
+            android:id="@+id/fab_favorite"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="收藏"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/btn_star_big_on"
+            android:tint="@android:color/white"
+            android:layout_marginBottom="12dp" />
+
+        <ImageButton
+            android:id="@+id/fab_block"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="屏蔽"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:tint="@android:color/white"
+            android:layout_marginBottom="12dp" />
+
+        <ImageButton
+            android:id="@+id/fab_remote_download"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="远程下载"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/stat_sys_download"
+            android:tint="@android:color/white"
+            android:layout_marginBottom="12dp" />
+
+        <ImageButton
+            android:id="@+id/fab_copy"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="复制直播地址"
+            android:background="@android:color/transparent"
+            android:src="@drawable/ic_copy"
+            android:tint="@android:color/white" />
+
+    </LinearLayout>
 
     <ImageButton
-        android:id="@+id/btn_copy_url"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginTop="16dp"
+        android:id="@+id/btn_more"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:contentDescription="更多"
+        android:background="@android:color/transparent"
+        android:src="@android:drawable/ic_menu_more"
+        android:tint="@android:color/white"
         android:layout_marginEnd="16dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="复制直播地址"
-        android:padding="8dp"
-        app:srcCompat="@drawable/ic_copy"
-        app:tint="@android:color/white"
+        android:layout_marginBottom="24dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

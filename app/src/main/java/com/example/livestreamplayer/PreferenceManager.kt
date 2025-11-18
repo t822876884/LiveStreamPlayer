@@ -193,7 +193,16 @@ class PreferenceManager(context: Context) {
     }
 
     fun getRemoteDownloadUrl(): String? {
-        return sharedPreferences.getString(KEY_REMOTE_DOWNLOAD_URL, null)
+        return sharedPreferences.getString(KEY_REMOTE_DOWNLOAD_URL, DEFAULT_REMOTE_DOWNLOAD_URL)
+    }
+
+    fun saveChannelApiPrefix(url: String) {
+        sharedPreferences.edit().putString(KEY_CHANNEL_API_PREFIX, url).apply()
+    }
+
+    fun getChannelApiPrefix(): String {
+        return sharedPreferences.getString(KEY_CHANNEL_API_PREFIX, DEFAULT_CHANNEL_API_PREFIX)
+            ?: DEFAULT_CHANNEL_API_PREFIX
     }
 
     companion object {
@@ -207,5 +216,8 @@ class PreferenceManager(context: Context) {
         private const val KEY_BLOCKED_PLATFORMS = "blocked_platforms"
         private const val KEY_LAST_LIVE_REFRESH_TIME = "last_live_refresh_time"
         private const val KEY_REMOTE_DOWNLOAD_URL = "remote_download_url"
+        private const val KEY_CHANNEL_API_PREFIX = "channel_api_prefix"
+        private const val DEFAULT_CHANNEL_API_PREFIX = "http://api.hclyz.com:81/mf"
+        private const val DEFAULT_REMOTE_DOWNLOAD_URL = "http://www.530312.xyz:3180"
     }
 }

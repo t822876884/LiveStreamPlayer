@@ -11,6 +11,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
+import android.view.MotionEvent
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -42,6 +43,10 @@ class PlayerActivity : AppCompatActivity() {
     private var streamTitle: String? = null
     private var isRecording = false
     private var currentDownloadTaskId: String? = null
+    private var platformUrlForSwipe: String? = null
+    private var platformTitleForSwipe: String? = null
+    private var platformChannels: List<Channel> = emptyList()
+    private var currentChannelIndex: Int = -1
     private val playbackListener = object : Player.Listener {
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             updateKeepScreenOn(isPlaying)
@@ -69,22 +74,53 @@ class PlayerActivity : AppCompatActivity() {
         // 添加日志输出
         Log.d("PlayerActivity", "onCreate: 初始化播放器")
     
-        // --- 请将下面这段代码添加到您的 onCreate 方法中 ---
-        binding.btnCopyUrl.setOnClickListener {
+        binding.btnMore.setOnClickListener {
+            val vis = binding.moreContainer.visibility
+            binding.moreContainer.visibility = if (vis == View.VISIBLE) View.GONE else View.VISIBLE
+        }
+
+        binding.fabCopy.setOnClickListener {
             if (!streamUrl.isNullOrEmpty()) {
-                // 获取系统剪贴板服务
                 val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                // 创建一个 ClipData 对象
                 val clip = ClipData.newPlainText("Stream URL", streamUrl)
-                // 将 ClipData 设置到剪贴板
                 clipboard.setPrimaryClip(clip)
-    
-                // 弹出提示，告知用户复制成功
                 Toast.makeText(this, "直播地址已复制到剪贴板", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(this, "没有可复制的地址", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.fabFavorite.setOnClickListener {
+            if (streamUrl.isNullOrEmpty() || streamTitle.isNullOrEmpty()) {
+                Toast.makeText(this, "没有可操作的直播", Toast.LENGTH_SHORT).show()
+            } else {
+                val channel = Channel(streamTitle!!, streamUrl!!)
+                if (preferenceManager.isChannelFavorite(channel)) {
+                    preferenceManager.removeFavoriteChannel(channel)
+                    Toast.makeText(this, "已取消收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                } else {
+                    preferenceManager.saveFavoriteChannel(channel, platformUrlForSwipe ?: "")
+                    Toast.makeText(this, "已收藏主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        binding.fabBlock.setOnClickListener {
+            if (streamUrl.isNullOrEmpty() || streamTitle.isNullOrEmpty()) {
+                Toast.makeText(this, "没有可操作的直播", Toast.LENGTH_SHORT).show()
+            } else {
+                val channel = Channel(streamTitle!!, streamUrl!!)
+                if (preferenceManager.isChannelBlocked(channel)) {
+                    preferenceManager.removeBlockedChannel(channel)
+                    Toast.makeText(this, "已取消屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                } else {
+                    preferenceManager.addBlockedChannel(channel)
+                    Toast.makeText(this, "已屏蔽主播: ${channel.title}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        binding.fabRemoteDownload.setOnClickListener { sendRemoteDownloadRequest() }
 
         preferenceManager = PreferenceManager(this)
 
@@ -93,9 +129,20 @@ class PlayerActivity : AppCompatActivity() {
             streamUrl = intent.getStringExtra(EXTRA_STREAM_URL)
             streamTitle = intent.getStringExtra(EXTRA_STREAM_TITLE)
             title = streamTitle
+            binding.tvHeaderTitle.text = streamTitle
 
             if (streamUrl != null) {
                 initializePlayer(streamUrl!!)
+            }
+            // 如果是从平台页面进入，获取平台URL用于上下滑动切换
+            platformUrlForSwipe = intent.getStringExtra(ChannelListActivity.EXTRA_PLATFORM_URL)
+            platformTitleForSwipe = intent.getStringExtra(ChannelListActivity.EXTRA_PLATFORM_TITLE)
+            platformUrlForSwipe?.let {
+                setupVerticalSwipe()
+                loadPlatformChannels(it)
+            }
+            if (binding.tvHeaderTitle.text.isNullOrEmpty() && platformTitleForSwipe != null) {
+                binding.tvHeaderTitle.text = platformTitleForSwipe
             }
         } else {
             // 默认加载内容（可以是上次播放的内容或推荐内容）
@@ -104,6 +151,7 @@ class PlayerActivity : AppCompatActivity() {
                 streamUrl = lastPlayedChannel.address
                 streamTitle = lastPlayedChannel.title
                 title = streamTitle
+                binding.tvHeaderTitle.text = streamTitle
 
                 if (streamUrl != null) {
                     initializePlayer(streamUrl!!)
@@ -114,6 +162,73 @@ class PlayerActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             }
+        }
+    }
+
+    private fun setupVerticalSwipe() {
+        var downY = 0f
+        val threshold = 150f
+        binding.playerView.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    downY = event.y
+                    false
+                }
+                MotionEvent.ACTION_UP -> {
+                    val dy = event.y - downY
+                    if (platformChannels.isNotEmpty() && currentChannelIndex != -1) {
+                        if (dy < -threshold) {
+                            switchToIndex(currentChannelIndex + 1)
+                            return@setOnTouchListener true
+                        } else if (dy > threshold) {
+                            switchToIndex(currentChannelIndex - 1)
+                            return@setOnTouchListener true
+                        }
+                    }
+                    false
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun switchToIndex(index: Int) {
+        if (index < 0 || index >= platformChannels.size) return
+        val channel = platformChannels[index]
+        currentChannelIndex = index
+        streamUrl = channel.address
+        streamTitle = channel.title
+        title = streamTitle
+        binding.tvHeaderTitle.text = streamTitle
+        preferenceManager.saveLastPlayedChannel(channel)
+        player?.let { exo ->
+            val mediaItem = MediaItem.fromUri(channel.address)
+            exo.setMediaItem(mediaItem)
+            exo.playWhenReady = true
+            exo.prepare()
+        } ?: run {
+            initializePlayer(channel.address)
+        }
+    }
+
+    private fun loadPlatformChannels(url: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val prefix = preferenceManager.getChannelApiPrefix()
+                val fullUrl = "$prefix/$url"
+                val response = RetrofitInstance.api.getChannels(fullUrl)
+                if (response.isSuccessful && response.body() != null) {
+                    val allChannels = response.body()!!.channels
+                    val filtered = allChannels.filter { !preferenceManager.isChannelBlocked(it) }
+                    withContext(Dispatchers.Main) {
+                        platformChannels = filtered
+                        currentChannelIndex = filtered.indexOfFirst { it.address == streamUrl }
+                        if (currentChannelIndex == -1 && filtered.isNotEmpty()) {
+                            currentChannelIndex = 0
+                        }
+                    }
+                }
+            } catch (_: Exception) { }
         }
     }
 

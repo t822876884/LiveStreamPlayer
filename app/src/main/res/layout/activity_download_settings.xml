@@ -63,6 +63,20 @@
             android:inputType="textUri"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="平台频道接口前缀："
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/et_channel_api_prefix"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="http://api.hclyz.com:81/mf"
+            android:inputType="textUri"
+            android:layout_marginBottom="16dp" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="0dp"

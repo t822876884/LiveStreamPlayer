@@ -36,6 +36,7 @@ class ChannelListActivity : AppCompatActivity() {
         val platformTitle = intent.getStringExtra(EXTRA_PLATFORM_TITLE)
 
         title = platformTitle ?: "Channels"
+        binding.tvPlatformHeader.text = "平台：" + (platformTitle ?: platformUrl ?: "")
 
         if (platformUrl == null) {
             Toast.makeText(this, "Error: Platform URL not found", Toast.LENGTH_LONG).show()
@@ -56,6 +57,8 @@ class ChannelListActivity : AppCompatActivity() {
                 val intent = Intent(this, PlayerActivity::class.java).apply {
                     putExtra(PlayerActivity.EXTRA_STREAM_URL, channel.address)
                     putExtra(PlayerActivity.EXTRA_STREAM_TITLE, channel.title)
+                    putExtra(EXTRA_PLATFORM_URL, platformUrl)
+                    putExtra(EXTRA_PLATFORM_TITLE, intent.getStringExtra(EXTRA_PLATFORM_TITLE))
                 }
                 startActivity(intent)
             },
@@ -96,7 +99,8 @@ class ChannelListActivity : AppCompatActivity() {
         binding.progressBarChannels.visibility = View.VISIBLE
         lifecycleScope.launch {
             try {
-                val fullUrl = "http://api.hclyz.com:81/mf/$url"
+                val prefix = preferenceManager.getChannelApiPrefix()
+                val fullUrl = "$prefix/$url"
                 val response = RetrofitInstance.api.getChannels(fullUrl)
                 binding.progressBarChannels.visibility = View.GONE
     

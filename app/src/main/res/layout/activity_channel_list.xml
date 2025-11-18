@@ -4,6 +4,16 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
+    <TextView
+        android:id="@+id/tv_platform_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp"
+        android:textSize="18sp"
+        android:textColor="@android:color/holo_red_dark"
+        android:text="平台："
+        android:background="#FFF5F5" />
+
     <ProgressBar
         android:id="@+id/progressBar_channels"
         android:layout_width="wrap_content"

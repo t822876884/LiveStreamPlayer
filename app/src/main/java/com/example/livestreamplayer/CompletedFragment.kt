@@ -74,6 +74,7 @@ class CompletedFragment : Fragment() {
 
     private fun loadCompletedTasks() {
         lifecycleScope.launch {
+            println(remoteDownloadApi)
             val response = remoteDownloadApi.getTasks("completed", 1, 100)
             if (response.ok) {
                 completedAdapter.updateTasks(response.items)

@@ -39,6 +39,7 @@ class DownloadSettingsActivity : AppCompatActivity() {
         updatePathDisplay()
         updateStorageInfo()
         loadRemoteDownloadUrl()
+        loadChannelApiPrefix()
         
         binding.btnSelectDirectory.setOnClickListener {
             openDirectoryPicker()
@@ -46,6 +47,7 @@ class DownloadSettingsActivity : AppCompatActivity() {
         
         binding.btnSave.setOnClickListener {
             saveRemoteDownloadUrl()
+            saveChannelApiPrefix()
             if (preferenceManager.getDownloadPath() != null) {
                 Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show()
                 setResult(Activity.RESULT_OK)
@@ -103,6 +105,18 @@ class DownloadSettingsActivity : AppCompatActivity() {
         val url = binding.etRemoteDownloadUrl.text.toString().trim()
         if (url.isNotEmpty()) {
             preferenceManager.saveRemoteDownloadUrl(url)
+        }
+    }
+
+    private fun loadChannelApiPrefix() {
+        val prefix = preferenceManager.getChannelApiPrefix()
+        binding.etChannelApiPrefix.setText(prefix)
+    }
+
+    private fun saveChannelApiPrefix() {
+        val prefix = binding.etChannelApiPrefix.text.toString().trim()
+        if (prefix.isNotEmpty()) {
+            preferenceManager.saveChannelApiPrefix(prefix)
         }
     }
     

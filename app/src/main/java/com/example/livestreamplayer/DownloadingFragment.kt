@@ -54,7 +54,15 @@ class DownloadingFragment : Fragment() {
                 }
             },
             onPlayClick = { context, task ->
-                Toast.makeText(context, "文件正在下载中，无法播放", Toast.LENGTH_SHORT).show()
+                if (task.streamUrl.isNotEmpty()) {
+                    val intent = android.content.Intent(context, PlayerActivity::class.java).apply {
+                        putExtra(PlayerActivity.EXTRA_STREAM_URL, task.streamUrl)
+                        putExtra(PlayerActivity.EXTRA_STREAM_TITLE, task.channelTitle)
+                    }
+                    context.startActivity(intent)
+                } else {
+                    android.widget.Toast.makeText(context, "下载地址无效，无法播放", android.widget.Toast.LENGTH_SHORT).show()
+                }
             }
         )
         binding.recyclerViewDownloading.apply {
@@ -65,6 +73,7 @@ class DownloadingFragment : Fragment() {
 
     private fun loadDownloadingTasks() {
         lifecycleScope.launch {
+            println(remoteDownloadApi)
             val response = remoteDownloadApi.getTasks("downloading", 1, 100)
             if (response.ok) {
                 downloadingAdapter.updateTasks(response.items)

@@ -11,11 +11,13 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONException
 import org.json.JSONObject
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.net.URI
 
 class RemoteDownloadApi(private val context: Context) {
 
@@ -25,12 +27,15 @@ class RemoteDownloadApi(private val context: Context) {
 
     private fun getBaseUrl(): String? {
         val fullUrl = preferenceManager.getRemoteDownloadUrl()
-        return if (!fullUrl.isNullOrEmpty()) {
-            // Extract base URL from the full URL (e.g., http://localhost:3180)
-            // Assuming the full URL is always in the format "http://host:port/download"
-            fullUrl.substringBeforeLast("/")
-        } else {
-            null
+        if (fullUrl.isNullOrEmpty()) return null
+        return try {
+            val uri = URI(fullUrl)
+            val scheme = uri.scheme ?: "http"
+            val host = uri.host ?: return fullUrl
+            val port = if (uri.port != -1) ":" + uri.port else ""
+            scheme + "://" + host + port
+        } catch (e: Exception) {
+            fullUrl
         }
     }
 
@@ -91,13 +96,22 @@ class RemoteDownloadApi(private val context: Context) {
             val request = Request.Builder()
                 .url(url)
                 .get()
+                .addHeader("Accept", "application/json")
                 .build()
 
             try {
                 client.newCall(request).execute().use { response ->
                     val responseBody = response.body?.string()
                     if (response.isSuccessful && responseBody != null) {
-                        val jsonResponse = JSONObject(responseBody)
+                        val contentType = response.header("Content-Type") ?: ""
+                        if (!contentType.contains("application/json")) {
+                            return@withContext TasksResponse(false, emptyList(), 0, 0, 0, "响应类型错误: $contentType")
+                        }
+                        val jsonResponse = try {
+                            JSONObject(responseBody)
+                        } catch (e: JSONException) {
+                            return@withContext TasksResponse(false, emptyList(), 0, 0, 0, "解析错误: ${e.message}")
+                        }
                         val ok = jsonResponse.optBoolean("ok", false)
                         val message = jsonResponse.optString("message", "未知错误")
                         val itemsArray = jsonResponse.optJSONArray("items")
@@ -109,17 +123,23 @@ class RemoteDownloadApi(private val context: Context) {
                         itemsArray?.let {
                             for (i in 0 until it.length()) {
                                 val taskJson = it.getJSONObject(i)
+
                                 val id = taskJson.optString("id")
                                 val channelTitle = taskJson.optString("title")
-                                val streamUrl = taskJson.optString("url")
-                                val outputPath = taskJson.optString("filePath") // Assuming filePath is outputPath
-                                val statusString = taskJson.optString("status")
-                                val errorMessage = taskJson.optString("errorMessage")
-                                val startTimeString = taskJson.optString("startTime")
-                                val endTimeString = taskJson.optString("endTime")
+
+                                // url 字段可能带有反引号或空格，做清洗
+                                val rawUrl = optStringMulti(taskJson, "url")
+                                val streamUrl = rawUrl.replace("`", "").trim()
+
+                                // 兼容 file_path 与 filePath
+                                val outputPath = optStringMulti(taskJson, "file_path", "filePath")
+
+                                // 兼容 created_at/startTime 与 updated_at/endTime
+                                val startTimeString = optStringMulti(taskJson, "created_at", "startTime")
+                                val endTimeString = optStringMulti(taskJson, "updated_at", "endTime")
 
                                 val startTime = try {
-                                    dateFormat.parse(startTimeString)
+                                    if (startTimeString.isNotEmpty()) dateFormat.parse(startTimeString) else Date()
                                 } catch (e: Exception) {
                                     Date()
                                 }
@@ -129,6 +149,9 @@ class RemoteDownloadApi(private val context: Context) {
                                     null
                                 }
 
+                                val statusString = taskJson.optString("status")
+                                val errorMessage = optStringMulti(taskJson, "errorMessage", "error")
+
                                 val downloadStatus = when (statusString) {
                                     "downloading" -> DownloadStatus.DOWNLOADING
                                     "completed" -> DownloadStatus.COMPLETED
@@ -136,7 +159,18 @@ class RemoteDownloadApi(private val context: Context) {
                                     "cancelled" -> DownloadStatus.CANCELLED
                                     else -> DownloadStatus.DOWNLOADING
                                 }
-                                tasks.add(DownloadTask(id, channelTitle, streamUrl, outputPath, startTime, endTime, downloadStatus, errorMessage))
+                                tasks.add(
+                                    DownloadTask(
+                                        id = id,
+                                        channelTitle = channelTitle,
+                                        streamUrl = streamUrl,
+                                        outputPath = outputPath,
+                                        startTime = startTime,
+                                        endTime = endTime,
+                                        status = downloadStatus,
+                                        errorMessage = errorMessage
+                                    )
+                                )
                             }
                         }
                         return@withContext TasksResponse(ok, tasks, total, currentPage, currentPagesize, message)
@@ -152,14 +186,29 @@ class RemoteDownloadApi(private val context: Context) {
         }
     }
 
+    private fun optStringMulti(json: JSONObject, vararg keys: String): String {
+        for (k in keys) {
+            val v = json.optString(k, "")
+            if (!v.isNullOrEmpty()) return v
+        }
+        return ""
+    }
+
     private fun parseResponse(response: okhttp3.Response, responseBody: String?): com.example.livestreamplayer.ApiResponse {
-        return if (response.isSuccessful && responseBody != null) {
+        if (!response.isSuccessful || responseBody == null) {
+            return com.example.livestreamplayer.ApiResponse(false, responseBody ?: "请求失败")
+        }
+        val contentType = response.header("Content-Type") ?: ""
+        if (!contentType.contains("application/json")) {
+            return com.example.livestreamplayer.ApiResponse(false, "响应类型错误: $contentType")
+        }
+        return try {
             val jsonResponse = JSONObject(responseBody)
             val ok = jsonResponse.optBoolean("ok", false)
             val message = jsonResponse.optString("message", "未知错误")
             com.example.livestreamplayer.ApiResponse(ok, message)
-        } else {
-            com.example.livestreamplayer.ApiResponse(false, responseBody ?: "请求失败")
+        } catch (e: JSONException) {
+            com.example.livestreamplayer.ApiResponse(false, "解析错误: ${e.message}")
         }
     }
 }
