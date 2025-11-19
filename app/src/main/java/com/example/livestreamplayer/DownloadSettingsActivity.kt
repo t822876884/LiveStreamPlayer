@@ -45,16 +45,14 @@ class DownloadSettingsActivity : AppCompatActivity() {
             openDirectoryPicker()
         }
         
-        binding.btnSave.setOnClickListener {
+        binding.btnSaveRemote.setOnClickListener {
             saveRemoteDownloadUrl()
+            Toast.makeText(this, "远程下载地址已保存", Toast.LENGTH_SHORT).show()
+        }
+
+        binding.btnSavePrefix.setOnClickListener {
             saveChannelApiPrefix()
-            if (preferenceManager.getDownloadPath() != null) {
-                Toast.makeText(this, "设置已保存", Toast.LENGTH_SHORT).show()
-                setResult(Activity.RESULT_OK)
-                finish()
-            } else {
-                Toast.makeText(this, "请先选择下载目录", Toast.LENGTH_SHORT).show()
-            }
+            Toast.makeText(this, "平台接口配置已保存", Toast.LENGTH_SHORT).show()
         }
         
         binding.btnViewDownloads.setOnClickListener {

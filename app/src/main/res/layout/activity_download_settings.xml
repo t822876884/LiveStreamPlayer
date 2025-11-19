@@ -2,107 +2,201 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#F5F5F5">
 
-    <LinearLayout
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="设置"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:background="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:orientation="vertical"
-        android:padding="16dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/tv_title"
+        app:layout_constraintBottom_toTopOf="@+id/bottom_navigation">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="设置"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="请选择下载文件保存的目录："
-            android:layout_marginBottom="8dp" />
+            <!-- 本地下载设置 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
 
-        <TextView
-            android:id="@+id/tv_selected_path"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="未选择下载目录"
-            android:layout_marginBottom="16dp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
 
-        <Button
-            android:id="@+id/btn_select_directory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="选择目录" />
-            
-        <TextView
-            android:id="@+id/tv_storage_info"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:text="存储信息：正在加载..." />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="本地下载设置"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="远程下载地址："
-            android:layout_marginBottom="8dp" />
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="下载保存目录："
+                        android:layout_marginBottom="8dp" />
 
-        <EditText
-            android:id="@+id/et_remote_download_url"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="http://localhost:3180/download"
-            android:inputType="textUri"
-            android:layout_marginBottom="16dp" />
+                    <TextView
+                        android:id="@+id/tv_selected_path"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="未选择下载目录"
+                        android:textColor="@android:color/darker_gray"
+                        android:layout_marginBottom="12dp" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="平台频道接口前缀："
-            android:layout_marginBottom="8dp" />
+                    <Button
+                        android:id="@+id/btn_select_directory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="选择目录"
+                        android:layout_marginBottom="12dp"/>
 
-        <EditText
-            android:id="@+id/et_channel_api_prefix"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="http://api.hclyz.com:81/mf"
-            android:inputType="textUri"
-            android:layout_marginBottom="16dp" />
+                    <TextView
+                        android:id="@+id/tv_storage_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="存储信息：正在加载..."
+                        android:layout_marginBottom="16dp" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btn_save"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="保存设置" />
+                        <Button
+                            android:id="@+id/btn_view_tasks"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="下载任务"
+                            android:layout_marginEnd="8dp"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
-        <Button
-            android:id="@+id/btn_view_downloads"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="查看已下载文件"
-            android:layout_marginTop="16dp" />
-        
-        <Button
-            android:id="@+id/btn_view_tasks"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="查看下载任务"
-            android:layout_marginTop="8dp" />
+                        <Button
+                            android:id="@+id/btn_view_downloads"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="已下载文件"
+                            android:layout_marginStart="8dp"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                    </LinearLayout>
 
-    </LinearLayout>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 远程下载配置 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="远程下载配置"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="远程下载地址："
+                        android:layout_marginBottom="8dp" />
+
+                    <EditText
+                        android:id="@+id/et_remote_download_url"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="http://localhost:3180/download"
+                        android:inputType="textUri"
+                        android:layout_marginBottom="12dp" />
+
+                    <Button
+                        android:id="@+id/btn_save_remote"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="保存远程地址" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 平台接口配置 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="4dp"
+                app:cardUseCompatPadding="true">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="平台接口配置"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="16dp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="平台频道接口前缀："
+                        android:layout_marginBottom="8dp" />
+
+                    <EditText
+                        android:id="@+id/et_channel_api_prefix"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="http://api.hclyz.com:81/mf"
+                        android:inputType="textUri"
+                        android:layout_marginBottom="12dp" />
+
+                    <Button
+                        android:id="@+id/btn_save_prefix"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="保存接口配置" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
